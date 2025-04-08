@@ -18,10 +18,16 @@
 package org.apache.commons.io.input;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrowsExactly;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.time.Duration;
+import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.io.test.CustomIOException;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -30,9 +36,35 @@ import org.junit.jupiter.api.Test;
 public class ThrottledInputStreamTest extends ProxyInputStreamTest<ThrottledInputStream> {
 
     @Override
-    @SuppressWarnings("resource")
+    @SuppressWarnings({ "resource" })
     protected ThrottledInputStream createFixture() throws IOException {
-        return ThrottledInputStream.builder().setInputStream(createProxySource()).get();
+        return ThrottledInputStream.builder().setInputStream(createOriginInputStream()).get();
+    }
+
+    @Test
+    public void testAfterReadConsumer() throws Exception {
+        final AtomicBoolean boolRef = new AtomicBoolean();
+        // @formatter:off
+        try (InputStream bounded = ThrottledInputStream.builder()
+                .setCharSequence("Hi")
+                .setAfterRead(i -> boolRef.set(true))
+                .get()) {
+            IOUtils.consume(bounded);
+        }
+        // @formatter:on
+        assertTrue(boolRef.get());
+        // Throwing
+        final String message = "test exception message";
+        // @formatter:off
+        try (InputStream bounded = ThrottledInputStream.builder()
+                .setCharSequence("Hi")
+                .setAfterRead(i -> {
+                    throw new CustomIOException(message);
+                })
+                .get()) {
+            assertEquals(message, assertThrowsExactly(CustomIOException.class, () -> IOUtils.consume(bounded)).getMessage());
+        }
+        // @formatter:on
     }
 
     @Test
@@ -53,6 +85,11 @@ public class ThrottledInputStreamTest extends ProxyInputStreamTest<ThrottledInpu
         assertEquals(0, ThrottledInputStream.toSleepMillis(1, 2, 1_000));
         assertEquals(0, ThrottledInputStream.toSleepMillis(2, 2, 2_000));
         assertEquals(0, ThrottledInputStream.toSleepMillis(1, 2, 1_000));
+    }
+
+    @Test
+    public void testCloseHandleIOException() throws IOException {
+        ProxyInputStreamTest.testCloseHandleIOException(ThrottledInputStream.builder());
     }
 
     @Override

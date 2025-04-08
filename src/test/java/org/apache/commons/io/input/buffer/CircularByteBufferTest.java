@@ -19,6 +19,9 @@ package org.apache.commons.io.input.buffer;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.nio.charset.StandardCharsets;
 
 import org.junit.jupiter.api.Test;
 
@@ -26,6 +29,15 @@ import org.junit.jupiter.api.Test;
  * Tests {@link CircularByteBuffer}.
  */
 public class CircularByteBufferTest {
+
+    @Test
+    public void testAddByteSmallestBuffer() {
+        final CircularByteBuffer cbb = new CircularByteBuffer(1);
+        cbb.add((byte) 1);
+        assertEquals(1, cbb.read());
+        cbb.add((byte) 2);
+        assertEquals(2, cbb.read());
+    }
 
     @Test
     public void testAddInvalidOffset() {
@@ -58,6 +70,54 @@ public class CircularByteBufferTest {
     }
 
     @Test
+    public void testClear() {
+       final byte[] data = { 1, 2, 3 };
+       final CircularByteBuffer buffer = new CircularByteBuffer(10);
+       assertEquals(0, buffer.getCurrentNumberOfBytes());
+       assertFalse(buffer.hasBytes());
+
+       buffer.add(data, 0, data.length);
+       assertEquals(3, buffer.getCurrentNumberOfBytes());
+       assertEquals(7, buffer.getSpace());
+       assertTrue(buffer.hasBytes());
+       assertTrue(buffer.hasSpace());
+
+       buffer.clear();
+       assertEquals(0, buffer.getCurrentNumberOfBytes());
+       assertEquals(10, buffer.getSpace());
+       assertFalse(buffer.hasBytes());
+       assertTrue(buffer.hasSpace());
+    }
+
+    @Test
+    public void testHasSpace() {
+        final CircularByteBuffer cbb = new CircularByteBuffer(1);
+        assertTrue(cbb.hasSpace());
+        cbb.add((byte) 1);
+        assertFalse(cbb.hasSpace());
+        assertEquals(1, cbb.read());
+        assertTrue(cbb.hasSpace());
+        cbb.add((byte) 2);
+        assertFalse(cbb.hasSpace());
+        assertEquals(2, cbb.read());
+        assertTrue(cbb.hasSpace());
+    }
+
+    @Test
+    public void testHasSpaceInt() {
+        final CircularByteBuffer cbb = new CircularByteBuffer(1);
+        assertTrue(cbb.hasSpace(1));
+        cbb.add((byte) 1);
+        assertFalse(cbb.hasSpace(1));
+        assertEquals(1, cbb.read());
+        assertTrue(cbb.hasSpace(1));
+        cbb.add((byte) 2);
+        assertFalse(cbb.hasSpace(1));
+        assertEquals(2, cbb.read());
+        assertTrue(cbb.hasSpace(1));
+    }
+
+    @Test
     public void testPeekWithExcessiveLength() {
         assertFalse(new CircularByteBuffer().peek(new byte[] { 1, 3, 5, 7, 9 }, 0, 6));
     }
@@ -80,5 +140,26 @@ public class CircularByteBufferTest {
     @Test
     public void testPeekWithValidArguments() {
         assertFalse(new CircularByteBuffer().peek(new byte[] { 5, 10, 15, 20, 25 }, 0, 5));
+    }
+
+    @Test
+    public void testReadByteArray() {
+        final CircularByteBuffer cbb = new CircularByteBuffer();
+        final String string = "0123456789";
+        final byte[] bytesIn = string.getBytes(StandardCharsets.UTF_8);
+        cbb.add(bytesIn, 0, 10);
+        final byte[] bytesOut = new byte[10];
+        cbb.read(bytesOut, 0, 10);
+        assertEquals(string, new String(bytesOut, StandardCharsets.UTF_8));
+    }
+
+    @Test
+    public void testReadByteArrayIllegalArgumentException() {
+        final CircularByteBuffer cbb = new CircularByteBuffer();
+        final byte[] bytesOut = new byte[10];
+        // targetOffset < 0
+        assertThrows(IllegalArgumentException.class, () -> cbb.read(bytesOut, -1, 10));
+        // targetOffset >= targetBuffer.length
+        assertThrows(IllegalArgumentException.class, () -> cbb.read(bytesOut, 0, bytesOut.length + 1));
     }
 }

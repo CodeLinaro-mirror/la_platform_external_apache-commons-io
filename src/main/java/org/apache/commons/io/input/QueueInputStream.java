@@ -32,7 +32,7 @@ import org.apache.commons.io.build.AbstractStreamBuilder;
 import org.apache.commons.io.output.QueueOutputStream;
 
 /**
- * Simple alternative to JDK {@link java.io.PipedInputStream}; queue input stream provides what's written in queue output stream.
+ * Simple alternative to JDK {@link PipedInputStream}; queue input stream provides what's written in queue output stream.
  * <p>
  * To build an instance, use {@link Builder}.
  * </p>
@@ -105,7 +105,7 @@ public class QueueInputStream extends InputStream {
          * Sets backing queue for the stream.
          *
          * @param blockingQueue backing queue for the stream.
-         * @return this
+         * @return {@code this} instance.
          */
         public Builder setBlockingQueue(final BlockingQueue<Integer> blockingQueue) {
             this.blockingQueue = blockingQueue != null ? blockingQueue : new LinkedBlockingQueue<>();
@@ -116,7 +116,7 @@ public class QueueInputStream extends InputStream {
          * Sets the polling timeout.
          *
          * @param timeout the polling timeout.
-         * @return this.
+         * @return {@code this} instance.
          */
         public Builder setTimeout(final Duration timeout) {
             if (timeout != null && timeout.toNanos() < 0) {

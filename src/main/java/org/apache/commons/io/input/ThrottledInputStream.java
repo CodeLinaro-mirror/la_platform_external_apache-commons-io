@@ -24,8 +24,6 @@ import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.commons.io.build.AbstractStreamBuilder;
-
 /**
  * Provides bandwidth throttling on a specified InputStream. It is implemented as a wrapper on top of another InputStream instance. The throttling works by
  * examining the number of bytes read from the underlying InputStream from the beginning, and sleep()ing for a time interval if the byte-transfer is found
@@ -74,7 +72,7 @@ public final class ThrottledInputStream extends CountingInputStream {
      * @see #get()
      */
     // @formatter:on
-    public static class Builder extends AbstractStreamBuilder<ThrottledInputStream, Builder> {
+    public static class Builder extends AbstractBuilder<ThrottledInputStream, Builder> {
 
         /**
          * Effectively not throttled.
@@ -103,7 +101,7 @@ public final class ThrottledInputStream extends CountingInputStream {
         @SuppressWarnings("resource")
         @Override
         public ThrottledInputStream get() throws IOException {
-            return new ThrottledInputStream(getInputStream(), maxBytesPerSecond);
+            return new ThrottledInputStream(this);
         }
 
         /**
@@ -127,7 +125,9 @@ public final class ThrottledInputStream extends CountingInputStream {
     }
 
     static long toSleepMillis(final long bytesRead, final long maxBytesPerSec, final long elapsedMillis) {
-        assert elapsedMillis >= 0 : "The elapsed time should be greater or equal to zero";
+        if (elapsedMillis < 0) {
+            throw new IllegalArgumentException("The elapsed time should be greater or equal to zero");
+        }
         if (bytesRead <= 0 || maxBytesPerSec <= 0 || elapsedMillis == 0) {
             return 0;
         }
@@ -145,10 +145,12 @@ public final class ThrottledInputStream extends CountingInputStream {
     private final long startTime = System.currentTimeMillis();
     private Duration totalSleepDuration = Duration.ZERO;
 
-    private ThrottledInputStream(final InputStream proxy, final long maxBytesPerSecond) {
-        super(proxy);
-        assert maxBytesPerSecond > 0 : "Bandwidth " + maxBytesPerSecond + " is invalid.";
-        this.maxBytesPerSecond = maxBytesPerSecond;
+    private ThrottledInputStream(final Builder builder) throws IOException {
+        super(builder);
+        if (builder.maxBytesPerSecond <= 0) {
+            throw new IllegalArgumentException("Bandwidth " + builder.maxBytesPerSecond + " is invalid.");
+        }
+        this.maxBytesPerSecond = builder.maxBytesPerSecond;
     }
 
     @Override

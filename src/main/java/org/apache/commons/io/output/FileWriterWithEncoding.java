@@ -41,7 +41,7 @@ import org.apache.commons.io.build.AbstractStreamBuilder;
  * </p>
  * <p>
  * The encoding must be specified using either the name of the {@link Charset}, the {@link Charset}, or a {@link CharsetEncoder}. If the default encoding is
- * required then use the {@link java.io.FileWriter} directly, rather than this implementation.
+ * required then use the {@link FileWriter} directly, rather than this implementation.
  * </p>
  * <p>
  * To build an instance, use {@link Builder}.
@@ -113,14 +113,14 @@ public class FileWriterWithEncoding extends ProxyWriter {
                 throw new IllegalStateException(String.format("Mismatched Charset(%s) and CharsetEncoder(%s)", getCharset(), charsetEncoder.charset()));
             }
             final Object encoder = charsetEncoder != null ? charsetEncoder : getCharset();
-            return new FileWriterWithEncoding(FileWriterWithEncoding.initWriter(checkOrigin().getFile(), encoder, append));
+            return new FileWriterWithEncoding(initWriter(checkOrigin().getFile(), encoder, append));
         }
 
         /**
          * Sets whether or not to append.
          *
          * @param append Whether or not to append.
-         * @return this
+         * @return {@code this} instance.
          */
         public Builder setAppend(final boolean append) {
             this.append = append;
@@ -131,7 +131,7 @@ public class FileWriterWithEncoding extends ProxyWriter {
          * Sets charsetEncoder to use for encoding.
          *
          * @param charsetEncoder The charsetEncoder to use for encoding.
-         * @return this
+         * @return {@code this} instance.
          */
         public Builder setCharsetEncoder(final CharsetEncoder charsetEncoder) {
             this.charsetEncoder = charsetEncoder;

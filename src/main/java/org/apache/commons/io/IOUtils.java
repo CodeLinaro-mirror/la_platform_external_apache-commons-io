@@ -14,6 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.commons.io;
 
 import java.io.BufferedInputStream;
@@ -30,6 +31,8 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.io.PipedInputStream;
+import java.io.PipedOutputStream;
 import java.io.Reader;
 import java.io.UncheckedIOException;
 import java.io.Writer;
@@ -61,6 +64,7 @@ import java.util.zip.InflaterInputStream;
 import org.apache.commons.io.function.IOConsumer;
 import org.apache.commons.io.function.IOSupplier;
 import org.apache.commons.io.function.IOTriFunction;
+import org.apache.commons.io.input.CharSequenceReader;
 import org.apache.commons.io.input.QueueInputStream;
 import org.apache.commons.io.output.AppendableWriter;
 import org.apache.commons.io.output.ByteArrayOutputStream;
@@ -128,7 +132,7 @@ public class IOUtils {
     // or return one of them.
 
     /**
-     * CR char.
+     * CR char '{@value}'.
      *
      * @since 2.9.0
      */
@@ -145,12 +149,12 @@ public class IOUtils {
     public static final char DIR_SEPARATOR = File.separatorChar;
 
     /**
-     * The UNIX directory separator character.
+     * The UNIX directory separator character '{@value}'.
      */
     public static final char DIR_SEPARATOR_UNIX = '/';
 
     /**
-     * The Windows directory separator character.
+     * The Windows directory separator character '{@value}'.
      */
     public static final char DIR_SEPARATOR_WINDOWS = '\\';
 
@@ -162,13 +166,13 @@ public class IOUtils {
     public static final byte[] EMPTY_BYTE_ARRAY = {};
 
     /**
-     * Represents the end-of-file (or stream).
+     * Represents the end-of-file (or stream) value {@value}.
      * @since 2.5 (made public)
      */
     public static final int EOF = -1;
 
     /**
-     * LF char.
+     * LF char '{@value}'.
      *
      * @since 2.9.0
      */
@@ -541,7 +545,7 @@ public class IOUtils {
      * } catch (Exception e) {
      *     // error handling
      * } finally {
-     *     <b>IOUtils.closeQuietly(closeable); // In case normal close was skipped due to Exception</b>
+     *     <strong>IOUtils.closeQuietly(closeable); // In case normal close was skipped due to Exception</strong>
      * }
      * </pre>
      * <p>
@@ -1104,7 +1108,7 @@ public class IOUtils {
      */
     public static long copy(final InputStream inputStream, final OutputStream outputStream, final int bufferSize)
             throws IOException {
-        return copyLarge(inputStream, outputStream, IOUtils.byteArray(bufferSize));
+        return copyLarge(inputStream, outputStream, byteArray(bufferSize));
     }
 
     /**
@@ -1151,8 +1155,7 @@ public class IOUtils {
      */
     public static void copy(final InputStream input, final Writer writer, final Charset inputCharset)
             throws IOException {
-        final InputStreamReader reader = new InputStreamReader(input, Charsets.toCharset(inputCharset));
-        copy(reader, writer);
+        copy(new InputStreamReader(input, Charsets.toCharset(inputCharset)), writer);
     }
 
     /**
@@ -1184,9 +1187,9 @@ public class IOUtils {
     }
 
     /**
-     * Copies bytes from a {@link java.io.ByteArrayOutputStream} to a {@link QueueInputStream}.
+     * Copies bytes from a {@link ByteArrayOutputStream} to a {@link QueueInputStream}.
      * <p>
-     * Unlike using JDK {@link java.io.PipedInputStream} and {@link java.io.PipedOutputStream} for this, this
+     * Unlike using JDK {@link PipedInputStream} and {@link PipedOutputStream} for this, this
      * solution works safely in a single thread environment.
      * </p>
      * <p>
@@ -1200,9 +1203,9 @@ public class IOUtils {
      * InputStream inputStream = IOUtils.copy(outputStream);
      * </pre>
      *
-     * @param outputStream the {@link java.io.ByteArrayOutputStream} to read.
+     * @param outputStream the {@link ByteArrayOutputStream} to read.
      * @return the {@link QueueInputStream} filled with the content of the outputStream.
-     * @throws NullPointerException if the {@link java.io.ByteArrayOutputStream} is {@code null}.
+     * @throws NullPointerException if the {@link ByteArrayOutputStream} is {@code null}.
      * @throws IOException if an I/O error occurs.
      * @since 2.12
      */
@@ -1686,7 +1689,7 @@ public class IOUtils {
     /**
      * Fills the given array with 0s.
      *
-     * @param arr The array to fill.
+     * @param arr The non-null array to fill.
      * @return The given array.
      */
     private static byte[] fill0(final byte[] arr) {
@@ -1697,7 +1700,7 @@ public class IOUtils {
     /**
      * Fills the given array with 0s.
      *
-     * @param arr The array to fill.
+     * @param arr The non-null array to fill.
      * @return The given array.
      */
     private static char[] fill0(final char[] arr) {
@@ -1745,7 +1748,7 @@ public class IOUtils {
      * Returns the length of the given array in a null-safe manner.
      *
      * @param array an array or null
-     * @return the array length -- or 0 if the given array is null.
+     * @return the array length, or 0 if the given array is null.
      * @since 2.7
      */
     public static int length(final byte[] array) {
@@ -1756,7 +1759,7 @@ public class IOUtils {
      * Returns the length of the given array in a null-safe manner.
      *
      * @param array an array or null
-     * @return the array length -- or 0 if the given array is null.
+     * @return the array length, or 0 if the given array is null.
      * @since 2.7
      */
     public static int length(final char[] array) {
@@ -1767,7 +1770,7 @@ public class IOUtils {
      * Returns the length of the given CharSequence in a null-safe manner.
      *
      * @param csq a CharSequence or null
-     * @return the CharSequence length -- or 0 if the given CharSequence is null.
+     * @return the CharSequence length, or 0 if the given CharSequence is null.
      * @since 2.7
      */
     public static int length(final CharSequence csq) {
@@ -1778,7 +1781,7 @@ public class IOUtils {
      * Returns the length of the given array in a null-safe manner.
      *
      * @param array an array or null
-     * @return the array length -- or 0 if the given array is null.
+     * @return the array length, or 0 if the given array is null.
      * @since 2.7
      */
     public static int length(final Object[] array) {
@@ -2160,6 +2163,20 @@ public class IOUtils {
     }
 
     /**
+     * Gets the contents of a {@link CharSequence} as a list of Strings, one entry per line.
+     *
+     * @param csq the {@link CharSequence} to read, not null
+     * @return the list of Strings, never null
+     * @throws UncheckedIOException if an I/O error occurs
+     * @since 2.18.0
+     */
+    public static List<String> readLines(final CharSequence csq) throws UncheckedIOException {
+        try (CharSequenceReader reader = new CharSequenceReader(csq)) {
+            return readLines(reader);
+        }
+    }
+
+    /**
      * Gets the contents of an {@link InputStream} as a list of Strings,
      * one entry per line, using the default character encoding of the platform.
      * <p>
@@ -2360,7 +2377,7 @@ public class IOUtils {
      * </p>
      *
      * @param input byte stream to skip
-     * @param toSkip number of bytes to skip.
+     * @param skip number of bytes to skip.
      * @return number of bytes actually skipped.
      * @throws IOException              if there is a problem reading the file
      * @throws IllegalArgumentException if toSkip is negative
@@ -2368,8 +2385,8 @@ public class IOUtils {
      * @see <a href="https://issues.apache.org/jira/browse/IO-203">IO-203 - Add skipFully() method for InputStreams</a>
      * @since 2.0
      */
-    public static long skip(final InputStream input, final long toSkip) throws IOException {
-        return skip(input, toSkip, IOUtils::getScratchByteArrayWriteOnly);
+    public static long skip(final InputStream input, final long skip) throws IOException {
+        return skip(input, skip, IOUtils::getScratchByteArrayWriteOnly);
     }
 
     /**
@@ -2389,7 +2406,7 @@ public class IOUtils {
      * </p>
      *
      * @param input              byte stream to skip
-     * @param toSkip             number of bytes to skip.
+     * @param skip             number of bytes to skip.
      * @param skipBufferSupplier Supplies the buffer to use for reading.
      * @return number of bytes actually skipped.
      * @throws IOException              if there is a problem reading the file
@@ -2398,16 +2415,16 @@ public class IOUtils {
      * @see <a href="https://issues.apache.org/jira/browse/IO-203">IO-203 - Add skipFully() method for InputStreams</a>
      * @since 2.14.0
      */
-    public static long skip(final InputStream input, final long toSkip, final Supplier<byte[]> skipBufferSupplier) throws IOException {
-        if (toSkip < 0) {
-            throw new IllegalArgumentException("Skip count must be non-negative, actual: " + toSkip);
+    public static long skip(final InputStream input, final long skip, final Supplier<byte[]> skipBufferSupplier) throws IOException {
+        if (skip < 0) {
+            throw new IllegalArgumentException("Skip count must be non-negative, actual: " + skip);
         }
         //
         // No need to synchronize access to SCRATCH_BYTE_BUFFER_WO: We don't care if the buffer is written multiple
         // times or in parallel since the data is ignored. We reuse the same buffer, if the buffer size were variable or read-write,
         // we would need to synch or use a thread local to ensure some other thread safety.
         //
-        long remain = toSkip;
+        long remain = skip;
         while (remain > 0) {
             final byte[] skipBuffer = skipBufferSupplier.get();
             // See https://issues.apache.org/jira/browse/IO-203 for why we use read() rather than delegating to skip()
@@ -2417,7 +2434,7 @@ public class IOUtils {
             }
             remain -= n;
         }
-        return toSkip - remain;
+        return skip - remain;
     }
 
     /**
@@ -2726,7 +2743,7 @@ public class IOUtils {
      * Gets contents of an {@link InputStream} as a {@code byte[]}.
      * Use this method instead of {@link #toByteArray(InputStream)}
      * when {@link InputStream} size is known.
-     * <b>NOTE:</b> the method checks that the length can safely be cast to an int without truncation
+     * <strong>NOTE:</strong> the method checks that the length can safely be cast to an int without truncation
      * before using {@link IOUtils#toByteArray(InputStream, int)} to read into the byte array.
      * (Arrays can have no more than Integer.MAX_VALUE entries anyway)
      *

@@ -227,7 +227,7 @@ public final class PathUtils {
     }
 
     /**
-     * Cleans a directory including subdirectories without deleting directories.
+     * Cleans a directory by deleting only files, including in subdirectories, but without deleting the directories.
      *
      * @param directory directory to clean.
      * @return The visitation path counters.
@@ -238,7 +238,7 @@ public final class PathUtils {
     }
 
     /**
-     * Cleans a directory including subdirectories without deleting directories.
+     * Cleans a directory by deleting only files, including in subdirectories, but without deleting the directories.
      *
      * @param directory     directory to clean.
      * @param deleteOptions How to handle deletion.
@@ -416,11 +416,11 @@ public final class PathUtils {
     /**
      * Deletes a file or directory. If the path is a directory, delete it and all subdirectories.
      * <p>
-     * The difference between File.delete() and this method are:
+     * The difference between {@link File#delete()} and this method are:
      * </p>
      * <ul>
      * <li>A directory to delete does not have to be empty.</li>
-     * <li>You get exceptions when a file or directory cannot be deleted; {@link java.io.File#delete()} returns a boolean.
+     * <li>You get exceptions when a file or directory cannot be deleted; {@link File#delete()} returns a boolean.
      * </ul>
      *
      * @param path file or directory to delete, must not be {@code null}
@@ -439,7 +439,7 @@ public final class PathUtils {
      * </p>
      * <ul>
      * <li>A directory to delete does not have to be empty.</li>
-     * <li>You get exceptions when a file or directory cannot be deleted; {@link java.io.File#delete()} returns a boolean.
+     * <li>You get exceptions when a file or directory cannot be deleted; {@link File#delete()} returns a boolean.
      * </ul>
      *
      * @param path          file or directory to delete, must not be {@code null}
@@ -461,7 +461,7 @@ public final class PathUtils {
      * </p>
      * <ul>
      * <li>A directory to delete does not have to be empty.</li>
-     * <li>You get exceptions when a file or directory cannot be deleted; {@link java.io.File#delete()} returns a boolean.
+     * <li>You get exceptions when a file or directory cannot be deleted; {@link File#delete()} returns a boolean.
      * </ul>
      *
      * @param path          file or directory to delete, must not be {@code null}
@@ -498,7 +498,7 @@ public final class PathUtils {
      * @since 2.8.0
      */
     public static PathCounters deleteDirectory(final Path directory, final DeleteOption... deleteOptions) throws IOException {
-        final LinkOption[] linkOptions = PathUtils.noFollowLinkOptionArray();
+        final LinkOption[] linkOptions = noFollowLinkOptionArray();
         // POSIX ops will noop on non-POSIX.
         return withPosixFileAttributes(getParent(directory), linkOptions, overrideReadOnly(deleteOptions),
                 pfa -> visitFileTree(new DeletingPathVisitor(Counters.longPathCounters(), linkOptions, deleteOptions), directory).getPathCounters());
@@ -524,7 +524,7 @@ public final class PathUtils {
      * @param file The file to delete.
      * @return A visitor with path counts set to 1 file, 0 directories, and the size of the deleted file.
      * @throws IOException         if an I/O error occurs.
-     * @throws NoSuchFileException if the file is a directory.
+     * @throws NoSuchFileException if the file is a directory
      */
     public static PathCounters deleteFile(final Path file) throws IOException {
         return deleteFile(file, EMPTY_DELETE_OPTION_ARRAY);
@@ -559,7 +559,7 @@ public final class PathUtils {
     public static PathCounters deleteFile(final Path file, final LinkOption[] linkOptions, final DeleteOption... deleteOptions)
             throws NoSuchFileException, IOException {
         //
-        // TODO Needs clean up
+        // TODO Needs clean up?
         //
         if (Files.isDirectory(file, linkOptions)) {
             throw new NoSuchFileException(file.toString());
@@ -605,7 +605,7 @@ public final class PathUtils {
      * @since 3.13.0
      */
     public static void deleteOnExit(final Path path) {
-        Objects.requireNonNull(path.toFile()).deleteOnExit();
+        Objects.requireNonNull(path).toFile().deleteOnExit();
     }
 
     /**
@@ -696,8 +696,7 @@ public final class PathUtils {
     }
 
     private static boolean exists(final Path path, final LinkOption... options) {
-        Objects.requireNonNull(path, "path");
-        return options != null ? Files.exists(path, options) : Files.exists(path);
+        return path != null && (options != null ? Files.exists(path, options) : Files.exists(path));
     }
 
     /**
@@ -875,7 +874,7 @@ public final class PathUtils {
     }
 
     /**
-     * Shorthand for {@code Files.getFileAttributeView(path, DosFileAttributeView.class)}.
+     * Shorthand for {@code Files.getFileAttributeView(path, DosFileAttributeView.class, options)}.
      *
      * @param path    the path to the file.
      * @param options how to handle symbolic links.
@@ -1067,7 +1066,7 @@ public final class PathUtils {
      *
      * @param directory the directory to query.
      * @return whether the directory is empty.
-     * @throws NotDirectoryException if the file could not otherwise be opened because it is not a directory <i>(optional specific exception)</i>.
+     * @throws NotDirectoryException if the file could not otherwise be opened because it is not a directory <em>(optional specific exception)</em>.
      * @throws IOException           if an I/O error occurs.
      * @throws SecurityException     In the case of the default provider, and a security manager is installed, the {@link SecurityManager#checkRead(String)
      *                               checkRead} method is invoked to check read access to the directory.
@@ -1421,13 +1420,14 @@ public final class PathUtils {
     }
 
     /**
-     * Reads the given path as a String.
+     * Reads the file contents at the given path as a String using the Charset.
      *
      * @param path    The source path.
      * @param charset How to convert bytes to a String, null uses the default Charset.
-     * @return a new String.
+     * @return the file contents as a new String.
      * @throws IOException if an I/O error occurs reading from the stream.
      * @see Files#readAllBytes(Path)
+     * @see Charsets#toCharset(Charset)
      * @since 2.12.0
      */
     public static String readString(final Path path, final Charset charset) throws IOException {
@@ -1599,7 +1599,7 @@ public final class PathUtils {
         }
         final Path parent = getParent(path);
         if (!isPosix(parent, linkOptions)) { // Test parent because we may not the permissions to test the file.
-            throw new IOException(String.format("DOS or POSIX file operations not available for '%s' %s", path, Arrays.toString(linkOptions)));
+            throw new IOException(String.format("DOS or POSIX file operations not available for '%s', linkOptions %s", path, Arrays.toString(linkOptions)));
         }
         // POSIX
         if (readOnly) {
@@ -1785,7 +1785,7 @@ public final class PathUtils {
     }
 
     /**
-     * Waits for the file system to propagate a file creation, with a timeout.
+     * Waits for the file system to detect a file's presence, with a timeout.
      * <p>
      * This method repeatedly tests {@link Files#exists(Path,LinkOption...)} until it returns true up to the maximum time given.
      * </p>
@@ -1841,6 +1841,7 @@ public final class PathUtils {
      * @throws IOException if an I/O error is thrown when accessing the starting file.
      * @since 2.9.0
      */
+    @SuppressWarnings("resource") // Caller closes
     public static Stream<Path> walk(final Path start, final PathFilter pathFilter, final int maxDepth, final boolean readAttributes,
             final FileVisitOption... options) throws IOException {
         return Files.walk(start, maxDepth, options)

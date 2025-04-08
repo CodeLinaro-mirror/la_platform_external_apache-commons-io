@@ -69,7 +69,7 @@ import org.apache.commons.io.build.AbstractStreamBuilder;
  * @see Builder
  * @since 2.12.0
  */
-public final class MemoryMappedFileInputStream extends InputStream {
+public final class MemoryMappedFileInputStream extends AbstractInputStream {
 
     // @formatter:off
     /**
@@ -146,7 +146,6 @@ public final class MemoryMappedFileInputStream extends InputStream {
     private final int bufferSize;
     private final FileChannel channel;
     private ByteBuffer buffer = EMPTY_BUFFER;
-    private boolean closed;
 
     /**
      * The starting position (within the file) of the next sliding buffer.
@@ -167,6 +166,7 @@ public final class MemoryMappedFileInputStream extends InputStream {
 
     @Override
     public int available() throws IOException {
+        //return buffer != null ? buffer.remaining(): 0;
         return buffer.remaining();
     }
 
@@ -178,17 +178,11 @@ public final class MemoryMappedFileInputStream extends InputStream {
 
     @Override
     public void close() throws IOException {
-        if (!closed) {
+        if (!isClosed()) {
             cleanBuffer();
-            buffer = null;
+            buffer = EMPTY_BUFFER;
             channel.close();
-            closed = true;
-        }
-    }
-
-    private void ensureOpen() throws IOException {
-        if (closed) {
-            throw new IOException("Stream closed");
+            super.close();
         }
     }
 
@@ -210,7 +204,7 @@ public final class MemoryMappedFileInputStream extends InputStream {
 
     @Override
     public int read() throws IOException {
-        ensureOpen();
+        checkOpen();
         if (!buffer.hasRemaining()) {
             nextBuffer();
             if (!buffer.hasRemaining()) {
@@ -222,7 +216,7 @@ public final class MemoryMappedFileInputStream extends InputStream {
 
     @Override
     public int read(final byte[] b, final int off, final int len) throws IOException {
-        ensureOpen();
+        checkOpen();
         if (!buffer.hasRemaining()) {
             nextBuffer();
             if (!buffer.hasRemaining()) {
@@ -236,7 +230,7 @@ public final class MemoryMappedFileInputStream extends InputStream {
 
     @Override
     public long skip(final long n) throws IOException {
-        ensureOpen();
+        checkOpen();
         if (n <= 0) {
             return 0;
         }

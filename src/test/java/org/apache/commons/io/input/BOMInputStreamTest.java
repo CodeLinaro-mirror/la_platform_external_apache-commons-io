@@ -21,6 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertThrowsExactly;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumeFalse;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
@@ -31,12 +32,16 @@ import java.io.InputStream;
 import java.io.Reader;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
 import org.apache.commons.io.ByteOrderMark;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.io.test.CustomIOException;
+import org.apache.commons.lang3.SystemProperties;
 import org.junit.jupiter.api.Test;
 import org.w3c.dom.Document;
 import org.xml.sax.InputSource;
@@ -53,15 +58,15 @@ public class BOMInputStreamTest {
      *  A mock InputStream that expects {@code close()} to be called.
      */
     private static final class ExpectCloseInputStream extends InputStream {
-        private boolean _closeCalled;
+        private boolean closed;
 
         public void assertCloseCalled() {
-            assertTrue(_closeCalled);
+            assertTrue(closed);
         }
 
         @Override
         public void close() throws IOException {
-            _closeCalled = true;
+            closed = true;
         }
 
         @Override
@@ -189,9 +194,9 @@ public class BOMInputStreamTest {
             try (BOMInputStream bomInputStream = BOMInputStream.builder().setInputStream(inputStream).get()) {
                 bomInputStream.mark(1_000_000);
 
-                this.readFile(bomInputStream);
+                readFile(bomInputStream);
                 bomInputStream.reset();
-                this.readFile(bomInputStream);
+                readFile(bomInputStream);
                 inputStream.close();
             }
         }
@@ -206,7 +211,45 @@ public class BOMInputStreamTest {
     }
 
     @Test
-    public void testAvailableWithBOM() throws Exception {
+    public void testAfterReadConsumer() throws Exception {
+        final byte[] data = { 'A', 'B', 'C', 'D' };
+        final AtomicBoolean boolRef = new AtomicBoolean();
+        // @formatter:off
+        try (InputStream bounded = BOMInputStream.builder()
+                .setInputStream(createUtf8Input(data, true))
+                .setAfterRead(i -> boolRef.set(true))
+                .get()) {
+            IOUtils.consume(bounded);
+        }
+        // @formatter:on
+        assertTrue(boolRef.get());
+        // Throwing
+        final String message = "test exception message";
+        // @formatter:off
+        try (InputStream bounded = BOMInputStream.builder()
+                .setInputStream(createUtf8Input(data, true))
+                .setAfterRead(i -> {
+                    throw new CustomIOException(message);
+                })
+                .get()) {
+            assertEquals(message, assertThrowsExactly(CustomIOException.class, () -> IOUtils.consume(bounded)).getMessage());
+        }
+        // @formatter:on
+    }
+
+    @Test
+    public void testAvailableWithBOMAfterClose() throws Exception {
+        final byte[] data = { 'A', 'B', 'C', 'D' };
+        final InputStream shadow;
+        try (InputStream in = BOMInputStream.builder().setInputStream(createUtf8Input(data, true)).get()) {
+            assertEquals(7, in.available());
+            shadow = in;
+        }
+        assertEquals(0, shadow.available());
+    }
+
+    @Test
+    public void testAvailableWithBOMAfterOpen() throws Exception {
         final byte[] data = { 'A', 'B', 'C', 'D' };
         try (InputStream in = BOMInputStream.builder().setInputStream(createUtf8Input(data, true)).get()) {
             assertEquals(7, in.available());
@@ -236,6 +279,11 @@ public class BOMInputStreamTest {
             }
             del.assertCloseCalled();
         }
+    }
+
+    @Test
+    public void testCloseHandleIOException() throws IOException {
+        ProxyInputStreamTest.testCloseHandleIOException(BOMInputStream.builder());
     }
 
     @Test
@@ -409,6 +457,16 @@ public class BOMInputStreamTest {
     }
 
     @Test
+    public void testReadAfterClose() throws Exception {
+        final byte[] data = { 'A', 'B', 'C', 'D' };
+        try (InputStream in = BOMInputStream.builder().setInputStream(createUtf8Input(data, true)).get()) {
+            assertEquals(7, in.available());
+            in.close();
+            assertThrows(IOException.class, in::read);
+        }
+    }
+
+    @Test
     public void testReadEmpty() throws Exception {
         final byte[] data = {};
         try (BOMInputStream in = BOMInputStream.builder().setInputStream(createUtf8Input(data, false)).get()) {
@@ -434,12 +492,12 @@ public class BOMInputStreamTest {
 
     @Test
     public void testReadTwiceWithBOM() throws Exception {
-        this.readBOMInputStreamTwice("/org/apache/commons/io/testfileBOM.xml");
+        readBOMInputStreamTwice("/org/apache/commons/io/testfileBOM.xml");
     }
 
     @Test
     public void testReadTwiceWithoutBOM() throws Exception {
-        this.readBOMInputStreamTwice("/org/apache/commons/io/testfileNoBOM.xml");
+        readBOMInputStreamTwice("/org/apache/commons/io/testfileNoBOM.xml");
     }
 
     @Test
@@ -594,7 +652,7 @@ public class BOMInputStreamTest {
 
     @Test
     public void testReadXmlWithBOMUcs2() throws Exception {
-        assumeFalse(System.getProperty("java.vendor").contains("IBM"), "This test does not pass on some IBM VMs xml parsers");
+        assumeFalse(SystemProperties.getJavaVendor().contains("IBM"), "This test does not pass on some IBM VMs xml parsers");
 
         // UCS-2 is BE.
         assumeTrue(Charset.isSupported("ISO-10646-UCS-2"));

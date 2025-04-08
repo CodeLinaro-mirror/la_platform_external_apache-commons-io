@@ -18,8 +18,11 @@ package org.apache.commons.io.input;
 
 import static org.apache.commons.io.IOUtils.EOF;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
@@ -42,10 +45,10 @@ import org.apache.commons.io.charset.CharsetEncoders;
  * Since in general it is not possible to predict the number of characters to be read from the {@link Reader} to satisfy a read request on the
  * {@link ReaderInputStream}, all reads from the {@link Reader} are buffered. There is therefore no well defined correlation between the current position of the
  * {@link Reader} and that of the {@link ReaderInputStream}. This also implies that in general there is no need to wrap the underlying {@link Reader} in a
- * {@link java.io.BufferedReader}.
+ * {@link BufferedReader}.
  * </p>
  * <p>
- * {@link ReaderInputStream} implements the inverse transformation of {@link java.io.InputStreamReader}; in the following example, reading from {@code in2}
+ * {@link ReaderInputStream} implements the inverse transformation of {@link InputStreamReader}; in the following example, reading from {@code in2}
  * would return the same byte sequence as reading from {@code in} (provided that the initial byte sequence is legal with respect to the charset encoding):
  * </p>
  * <p>
@@ -61,14 +64,14 @@ import org.apache.commons.io.charset.CharsetEncoders;
  *   .get();
  * </pre>
  * <p>
- * {@link ReaderInputStream} implements the same transformation as {@link java.io.OutputStreamWriter}, except that the control flow is reversed: both classes
- * transform a character stream into a byte stream, but {@link java.io.OutputStreamWriter} pushes data to the underlying stream, while {@link ReaderInputStream}
+ * {@link ReaderInputStream} implements the same transformation as {@link OutputStreamWriter}, except that the control flow is reversed: both classes
+ * transform a character stream into a byte stream, but {@link OutputStreamWriter} pushes data to the underlying stream, while {@link ReaderInputStream}
  * pulls it from the underlying stream.
  * </p>
  * <p>
  * Note that while there are use cases where there is no alternative to using this class, very often the need to use this class is an indication of a flaw in
  * the design of the code. This class is typically used in situations where an existing API only accepts an {@link InputStream}, but where the most natural way
- * to produce the data is as a character stream, i.e. by providing a {@link Reader} instance. An example of a situation where this problem may appear is when
+ * to produce the data is as a character stream, by providing a {@link Reader} instance. An example of a situation where this problem may appear is when
  * implementing the {@code javax.activation.DataSource} interface from the Java Activation Framework.
  * </p>
  * <p>
@@ -82,7 +85,7 @@ import org.apache.commons.io.charset.CharsetEncoders;
  * @see org.apache.commons.io.output.WriterOutputStream
  * @since 2.0
  */
-public class ReaderInputStream extends InputStream {
+public class ReaderInputStream extends AbstractInputStream {
 
     // @formatter:off
     /**
@@ -150,7 +153,7 @@ public class ReaderInputStream extends InputStream {
          * Sets the charset encoder. Assumes that the caller has configured the encoder.
          *
          * @param newEncoder the charset encoder, null resets to a default encoder.
-         * @return this
+         * @return {@code this} instance.
          */
         public Builder setCharsetEncoder(final CharsetEncoder newEncoder) {
             charsetEncoder = CharsetEncoders.toCharsetEncoder(newEncoder, () -> newEncoder(getCharsetDefault()));
@@ -335,6 +338,14 @@ public class ReaderInputStream extends InputStream {
         this(reader, Charsets.toCharset(charsetName), bufferSize);
     }
 
+    @Override
+    public int available() throws IOException {
+        if (encoderOut.hasRemaining()) {
+            return encoderOut.remaining();
+        }
+        return 0;
+    }
+
     /**
      * Closes the stream. This method will cause the underlying {@link Reader} to be closed.
      *
@@ -343,6 +354,7 @@ public class ReaderInputStream extends InputStream {
     @Override
     public void close() throws IOException {
         reader.close();
+        super.close();
     }
 
     /**
@@ -396,6 +408,7 @@ public class ReaderInputStream extends InputStream {
      */
     @Override
     public int read() throws IOException {
+        checkOpen();
         for (;;) {
             if (encoderOut.hasRemaining()) {
                 return encoderOut.get() & 0xFF;

@@ -19,6 +19,7 @@ package org.apache.commons.io.build;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -33,15 +34,21 @@ import java.nio.file.Files;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
+import java.nio.file.spi.FileSystemProvider;
 import java.util.Arrays;
 import java.util.Objects;
 
+import org.apache.commons.io.IORandomAccessFile;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.RandomAccessFileMode;
 import org.apache.commons.io.RandomAccessFiles;
+import org.apache.commons.io.file.spi.FileSystemProviders;
+import org.apache.commons.io.input.BufferedFileChannelInputStream;
 import org.apache.commons.io.input.CharSequenceInputStream;
 import org.apache.commons.io.input.CharSequenceReader;
 import org.apache.commons.io.input.ReaderInputStream;
+import org.apache.commons.io.output.RandomAccessFileOutputStream;
 import org.apache.commons.io.output.WriterOutputStream;
 
 /**
@@ -57,6 +64,83 @@ import org.apache.commons.io.output.WriterOutputStream;
  * @since 2.12.0
  */
 public abstract class AbstractOrigin<T, B extends AbstractOrigin<T, B>> extends AbstractSupplier<T, B> {
+
+    /**
+     * A {@link RandomAccessFile} origin.
+     * <p>
+     * This origin cannot support File and Path since you cannot query a RandomAccessFile for those attributes; Use {@link IORandomAccessFileOrigin}
+     * instead.
+     * </p>
+     *
+     * @param <T> the type of instances to build.
+     * @param <B> the type of builder subclass.
+     */
+    public static abstract class AbstractRandomAccessFileOrigin<T extends RandomAccessFile, B extends AbstractRandomAccessFileOrigin<T, B>>
+            extends AbstractOrigin<T, B> {
+
+        /**
+         * A {@link RandomAccessFile} origin.
+         * <p>
+         * Starting from this origin, you can everything except a Path and a File.
+         * </p>
+         *
+         * @param origin The origin.
+         */
+        public AbstractRandomAccessFileOrigin(final T origin) {
+            super(origin);
+        }
+
+        @Override
+        public byte[] getByteArray() throws IOException {
+            final long longLen = origin.length();
+            if (longLen > Integer.MAX_VALUE) {
+                throw new IllegalStateException("Origin too large.");
+            }
+            return RandomAccessFiles.read(origin, 0, (int) longLen);
+        }
+
+        @Override
+        public byte[] getByteArray(final long position, final int length) throws IOException {
+            return RandomAccessFiles.read(origin, position, length);
+        }
+
+        @Override
+        public CharSequence getCharSequence(final Charset charset) throws IOException {
+            return new String(getByteArray(), charset);
+        }
+
+        @SuppressWarnings("resource")
+        @Override
+        public InputStream getInputStream(final OpenOption... options) throws IOException {
+            return BufferedFileChannelInputStream.builder().setFileChannel(origin.getChannel()).get();
+        }
+
+        @Override
+        public OutputStream getOutputStream(final OpenOption... options) throws IOException {
+            return RandomAccessFileOutputStream.builder().setRandomAccessFile(origin).get();
+        }
+
+        @Override
+        public T getRandomAccessFile(final OpenOption... openOption) {
+            // No conversion
+            return get();
+        }
+
+        @Override
+        public Reader getReader(final Charset charset) throws IOException {
+            return new InputStreamReader(getInputStream(), charset);
+        }
+
+        @Override
+        public Writer getWriter(final Charset charset, final OpenOption... options) throws IOException {
+            return new OutputStreamWriter(getOutputStream(options), charset);
+        }
+
+        @Override
+        public long size() throws IOException {
+            return origin.length();
+        }
+    }
 
     /**
      * A {@code byte[]} origin.
@@ -242,6 +326,35 @@ public abstract class AbstractOrigin<T, B extends AbstractOrigin<T, B>> extends 
     }
 
     /**
+     * A {@link IORandomAccessFile} origin.
+     *
+     * @since 2.18.0
+     */
+    public static class IORandomAccessFileOrigin extends AbstractRandomAccessFileOrigin<IORandomAccessFile, IORandomAccessFileOrigin> {
+
+        /**
+         * A {@link RandomAccessFile} origin.
+         *
+         * @param origin The origin.
+         */
+        public IORandomAccessFileOrigin(final IORandomAccessFile origin) {
+            super(origin);
+        }
+
+        @SuppressWarnings("resource")
+        @Override
+        public File getFile() {
+            return get().getFile();
+        }
+
+        @Override
+        public Path getPath() {
+            return getFile().toPath();
+        }
+
+    }
+
+    /**
      * An {@link OutputStream} origin.
      * <p>
      * This origin cannot provide some of the other aspects.
@@ -301,9 +414,7 @@ public abstract class AbstractOrigin<T, B extends AbstractOrigin<T, B>> extends 
 
         @Override
         public byte[] getByteArray(final long position, final int length) throws IOException {
-            try (RandomAccessFile raf = RandomAccessFileMode.READ_ONLY.create(origin)) {
-                return RandomAccessFiles.read(raf, position, length);
-            }
+            return RandomAccessFileMode.READ_ONLY.apply(origin, raf -> RandomAccessFiles.read(raf, position, length));
         }
 
         @Override
@@ -320,9 +431,32 @@ public abstract class AbstractOrigin<T, B extends AbstractOrigin<T, B>> extends 
     }
 
     /**
-     * An {@link Reader} origin.
+     * A {@link RandomAccessFile} origin.
      * <p>
-     * This origin cannot provide other aspects.
+     * This origin cannot support File and Path since you cannot query a RandomAccessFile for those attributes; Use {@link IORandomAccessFileOrigin}
+     * instead.
+     * </p>
+     */
+    public static class RandomAccessFileOrigin extends AbstractRandomAccessFileOrigin<RandomAccessFile, RandomAccessFileOrigin> {
+
+        /**
+         * A {@link RandomAccessFile} origin.
+         * <p>
+         * Starting from this origin, you can everything except a Path and a File.
+         * </p>
+         *
+         * @param origin The origin.
+         */
+        public RandomAccessFileOrigin(final RandomAccessFile origin) {
+            super(origin);
+        }
+
+    }
+
+    /**
+     * A {@link Reader} origin.
+     * <p>
+     * This origin cannot provide conversions to other aspects.
      * </p>
      */
     public static class ReaderOrigin extends AbstractOrigin<Reader, ReaderOrigin> {
@@ -383,6 +517,9 @@ public abstract class AbstractOrigin<T, B extends AbstractOrigin<T, B>> extends 
      */
     public static class URIOrigin extends AbstractOrigin<URI, URIOrigin> {
 
+        private static final String SCHEME_HTTPS = "https";
+        private static final String SCHEME_HTTP = "http";
+
         /**
          * Constructs a new instance for the given origin.
          *
@@ -398,16 +535,29 @@ public abstract class AbstractOrigin<T, B extends AbstractOrigin<T, B>> extends 
         }
 
         @Override
+        public InputStream getInputStream(final OpenOption... options) throws IOException {
+            final URI uri = get();
+            final String scheme = uri.getScheme();
+            final FileSystemProvider fileSystemProvider = FileSystemProviders.installed().getFileSystemProvider(scheme);
+            if (fileSystemProvider != null) {
+                return Files.newInputStream(fileSystemProvider.getPath(uri), options);
+            }
+            if (SCHEME_HTTP.equalsIgnoreCase(scheme) || SCHEME_HTTPS.equalsIgnoreCase(scheme)) {
+                return uri.toURL().openStream();
+            }
+            return Files.newInputStream(getPath(), options);
+        }
+
+        @Override
         public Path getPath() {
             return Paths.get(get());
         }
-
     }
 
     /**
-     * An {@link Writer} origin.
+     * A {@link Writer} origin.
      * <p>
-     * This origin cannot provide other aspects.
+     * This origin cannot provide conversions to other aspects.
      * </p>
      */
     public static class WriterOrigin extends AbstractOrigin<Writer, WriterOrigin> {
@@ -485,7 +635,7 @@ public abstract class AbstractOrigin<T, B extends AbstractOrigin<T, B>> extends 
     }
 
     /**
-     * Gets this origin as a byte array, if possible.
+     * Gets a portion of this origin as a byte array, if possible.
      *
      * @param position the initial index of the range to be copied, inclusive.
      * @param length   How many bytes to copy.
@@ -525,7 +675,7 @@ public abstract class AbstractOrigin<T, B extends AbstractOrigin<T, B>> extends 
      */
     public File getFile() {
         throw new UnsupportedOperationException(
-                String.format("%s#getFile() for %s origin %s", getSimpleName(), origin.getClass().getSimpleName(), origin));
+                String.format("%s#getFile() for %s origin %s", getSimpleClassName(), origin.getClass().getSimpleName(), origin));
     }
 
     /**
@@ -560,7 +710,20 @@ public abstract class AbstractOrigin<T, B extends AbstractOrigin<T, B>> extends 
      */
     public Path getPath() {
         throw new UnsupportedOperationException(
-                String.format("%s#getPath() for %s origin %s", getSimpleName(), origin.getClass().getSimpleName(), origin));
+                String.format("%s#getPath() for %s origin %s", getSimpleClassName(), origin.getClass().getSimpleName(), origin));
+    }
+
+    /**
+     * Gets this origin as a RandomAccessFile, if possible.
+     *
+     * @param openOption options like {@link StandardOpenOption}.
+     * @return this origin as a RandomAccessFile, if possible.
+     * @throws FileNotFoundException         See {@link RandomAccessFile#RandomAccessFile(File, String)}.
+     * @throws UnsupportedOperationException if this method is not implemented in a concrete subclass.
+     * @since 2.18.0
+     */
+    public RandomAccessFile getRandomAccessFile(final OpenOption... openOption) throws FileNotFoundException {
+        return RandomAccessFileMode.valueOf(openOption).create(getFile());
     }
 
     /**
@@ -574,7 +737,7 @@ public abstract class AbstractOrigin<T, B extends AbstractOrigin<T, B>> extends 
         return Files.newBufferedReader(getPath(), charset);
     }
 
-    private String getSimpleName() {
+    private String getSimpleClassName() {
         return getClass().getSimpleName();
     }
 
@@ -604,6 +767,6 @@ public abstract class AbstractOrigin<T, B extends AbstractOrigin<T, B>> extends 
 
     @Override
     public String toString() {
-        return getSimpleName() + "[" + origin.toString() + "]";
+        return getSimpleClassName() + "[" + origin.toString() + "]";
     }
 }

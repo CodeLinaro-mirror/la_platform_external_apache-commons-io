@@ -36,38 +36,50 @@ jobs:
     continue-on-error: ${{ matrix.experimental }}
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        os: [ubuntu-latest, windows-latest, macos-13]
         java: [ 8, 11, 17, 21 ]
         experimental: [false]
+        # Keep the same parameter order as the matrix above
         include:
-          # Update java 8/ubuntu to add deploy step
-          - java: 8
-            os: ubuntu-latest
+          # Use Java 21 and Ubuntu to add deploy step
+          - os: ubuntu-latest
+            java: 21
             experimental: false
             deploy: true
-#          - java: 22-ea
-#            os: ubuntu-latest
-#            experimental: true        
-#          - java: 22-ea
-#            os: windows-latest
-#            experimental: true        
-#          - java: 22-ea
-#            os: macos-latest
-#            experimental: true        
+          # Experimental builds: Java 23
+          - os: ubuntu-latest
+            java: 23
+            experimental: false
+          - os: windows-latest
+            java: 23
+            experimental: false
+          - os: macos-latest
+            java: 23
+            experimental: false
+          # Experimental builds: Java 24-ea
+          - os: ubuntu-latest
+            java: 24-ea
+            experimental: true
+          - os: windows-latest
+            java: 24-ea
+            experimental: true
+          - os: macos-latest
+            java: 24-ea
+            experimental: true
       fail-fast: false
         
     steps:
-    - uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
+    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       with:
         persist-credentials: false
-    - uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
+    - uses: actions/cache@6849a6489940f00c2f30c0fb92c6274307ccb58a # v4.1.2
       with:
         path: ~/.m2/repository
         key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
         restore-keys: |
           ${{ runner.os }}-maven-
     - name: Set up JDK ${{ matrix.java }}
-      uses: actions/setup-java@99b8673ff64fbf99d8d325f52d9a5bdedb8483e9 # v4.2.1
+      uses: actions/setup-java@8df1039502a15bceb9433410b1a100fbe190c53b # v4.5.0
       with:
         distribution: 'temurin'
         java-version: ${{ matrix.java }}
@@ -76,7 +88,12 @@ jobs:
         server-username: NEXUS_USER # env variable for username in deploy
         server-password: NEXUS_PW # env variable for token in deploy
     - name: Build with Maven
-      run: mvn --show-version --batch-mode --no-transfer-progress -DtrimStackTrace=false
+      if: ${{ !matrix.experimental }}
+      run: mvn --errors --show-version --batch-mode --no-transfer-progress -DtrimStackTrace=false
+    - name: Test only with Maven
+      if: ${{ matrix.experimental }}
+      # Skip PMD etc when using experimental Java
+      run: mvn --errors --show-version --batch-mode --no-transfer-progress -DtrimStackTrace=false clean test
     - name: Deploy SNAPSHOT using minimal build
       if: matrix.deploy && github.repository == 'apache/commons-io' && github.ref_name == 'master' 
       env:

@@ -51,12 +51,18 @@ public class SwappedDataInputStreamTest {
             0x08
         };
         final ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
-        this.sdis = new SwappedDataInputStream( bais );
+        this.sdis = new SwappedDataInputStream(bais);
     }
 
     @AfterEach
     public void tearDown() {
         this.sdis = null;
+    }
+
+    @SuppressWarnings({ "resource" })
+    @Test
+    public void testCloseHandleIOException() throws IOException {
+        ProxyInputStreamTest.testCloseHandleIOException(new SwappedDataInputStream(new BrokenInputStream((Throwable) new IOException())));
     }
 
     @Test
@@ -108,8 +114,7 @@ public class SwappedDataInputStreamTest {
 
     @Test
     public void testReadLine() {
-        assertThrows(UnsupportedOperationException.class, () ->  this.sdis.readLine(),
-                "readLine should be unsupported. ");
+        assertThrows(UnsupportedOperationException.class, () -> this.sdis.readLine(), "readLine should be unsupported.");
     }
 
     @Test
@@ -134,8 +139,7 @@ public class SwappedDataInputStreamTest {
 
     @Test
     public void testReadUTF() {
-        assertThrows(UnsupportedOperationException.class, () ->  this.sdis.readUTF(),
-                "readUTF should be unsupported. ");
+        assertThrows(UnsupportedOperationException.class, () -> this.sdis.readUTF(), "readUTF should be unsupported.");
     }
 
     @Test

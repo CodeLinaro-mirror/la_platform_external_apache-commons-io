@@ -58,4 +58,5 @@ public class ReadAheadInputStreamTest extends AbstractInputStreamTest {
                 ReadAheadInputStream.builder().setInputStream(new BufferedFileChannelInputStream(inputFile, 123)).setBufferSize(321).get(),
                 ReadAheadInputStream.builder().setPath(inputFile).setOpenOptions(StandardOpenOption.READ).get() };
     }
+
 }

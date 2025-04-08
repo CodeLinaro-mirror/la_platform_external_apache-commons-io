@@ -481,14 +481,14 @@ public class IOUtilsTest {
     @Test
     public void testConsumeInputStream() throws Exception {
         final long size = (long) Integer.MAX_VALUE + (long) 1;
-        final InputStream in = new NullInputStream(size);
+        final NullInputStream in = new NullInputStream(size);
         final OutputStream out = NullOutputStream.INSTANCE;
 
         // Test copy() method
         assertEquals(-1, IOUtils.copy(in, out));
 
         // reset the input
-        in.close();
+        in.init();
 
         // Test consume() method
         assertEquals(size, IOUtils.consume(in), "consume()");
@@ -1016,6 +1016,36 @@ public class IOUtilsTest {
     }
 
     @Test
+    public void testReadLines_CharSequence() throws IOException {
+        final File file = TestUtils.newFile(temporaryFolder, "lines.txt");
+        CharSequence csq = null;
+        try {
+            final String[] data = {"hello", "/u1234", "", "this is", "some text"};
+            TestUtils.createLineBasedFile(file, data);
+            csq = new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8);
+            final List<String> lines = IOUtils.readLines(csq);
+            assertEquals(Arrays.asList(data), lines);
+        } finally {
+            TestUtils.deleteFile(file);
+        }
+    }
+
+    @Test
+    public void testReadLines_CharSequenceAsStringBuilder() throws IOException {
+        final File file = TestUtils.newFile(temporaryFolder, "lines.txt");
+        StringBuilder csq = null;
+        try {
+            final String[] data = {"hello", "/u1234", "", "this is", "some text"};
+            TestUtils.createLineBasedFile(file, data);
+            csq = new StringBuilder(new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8));
+            final List<String> lines = IOUtils.readLines(csq);
+            assertEquals(Arrays.asList(data), lines);
+        } finally {
+            TestUtils.deleteFile(file);
+        }
+    }
+
+    @Test
     public void testReadLines_InputStream() throws Exception {
         final File file = TestUtils.newFile(temporaryFolder, "lines.txt");
         InputStream in = null;
@@ -1058,7 +1088,6 @@ public class IOUtilsTest {
         try {
             final String[] data = {"hello", "/u1234", "", "this is", "some text"};
             TestUtils.createLineBasedFile(file, data);
-
             in = new InputStreamReader(Files.newInputStream(file.toPath()));
             final List<String> lines = IOUtils.readLines(in);
             assertEquals(Arrays.asList(data), lines);

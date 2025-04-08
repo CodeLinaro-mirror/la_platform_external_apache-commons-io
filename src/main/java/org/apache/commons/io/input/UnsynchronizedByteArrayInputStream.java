@@ -25,7 +25,7 @@ import org.apache.commons.io.build.AbstractOrigin;
 import org.apache.commons.io.build.AbstractStreamBuilder;
 
 /**
- * This is an alternative to {@link java.io.ByteArrayInputStream} which removes the synchronization overhead for non-concurrent access; as such this class is
+ * This is an alternative to {@link ByteArrayInputStream} which removes the synchronization overhead for non-concurrent access; as such this class is
  * not thread-safe.
  * <p>
  * To build an instance, use {@link Builder}.
@@ -118,7 +118,7 @@ public class UnsynchronizedByteArrayInputStream extends InputStream {
          * Sets the length.
          *
          * @param length Must be greater or equal to 0.
-         * @return this.
+         * @return {@code this} instance.
          */
         public Builder setLength(final int length) {
             if (length < 0) {
@@ -132,7 +132,7 @@ public class UnsynchronizedByteArrayInputStream extends InputStream {
          * Sets the offset.
          *
          * @param offset Must be greater or equal to 0.
-         * @return this.
+         * @return {@code this} instance.
          */
         public Builder setOffset(final int offset) {
             if (offset < 0) {
@@ -178,7 +178,7 @@ public class UnsynchronizedByteArrayInputStream extends InputStream {
     /**
      * End Of Data.
      *
-     * Similar to data.length, i.e. the last readable offset + 1.
+     * Similar to data.length, which is the last readable offset + 1.
      */
     private final int eod;
 

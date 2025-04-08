@@ -20,19 +20,24 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import org.apache.commons.io.build.AbstractOrigin.PathOrigin;
-import org.junit.jupiter.api.BeforeEach;
 
 /**
  * Tests {@link PathOrigin}.
  *
  * A PathOrigin can convert into all other aspects.
+ *
+ * @see Path
  */
 public class PathOriginTest extends AbstractOriginTest<Path, PathOrigin> {
 
-    @BeforeEach
-    public void beforeEach() {
-        setOriginRo(new PathOrigin(Paths.get(FILE_NAME_RO)));
-        setOriginRw(new PathOrigin(Paths.get(FILE_NAME_RW)));
+    @Override
+    protected PathOrigin newOriginRo() {
+        return new PathOrigin(Paths.get(FILE_NAME_RO));
+    }
+
+    @Override
+    protected PathOrigin newOriginRw() {
+        return new PathOrigin(Paths.get(FILE_NAME_RW));
     }
 
 }

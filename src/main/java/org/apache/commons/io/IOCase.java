@@ -16,6 +16,7 @@
  */
 package org.apache.commons.io;
 
+import java.io.File;
 import java.util.Objects;
 import java.util.stream.Stream;
 
@@ -56,7 +57,7 @@ public enum IOCase {
      * <strong>Note:</strong> This only caters for Windows and Unix. Other operating
      * systems (e.g. OSX and OpenVMS) are treated as case-sensitive if they use the
      * UNIX file separator and case-insensitive if they use the Windows file separator
-     * (see {@link java.io.File#separatorChar}).
+     * (see {@link File#separatorChar}).
      * </p>
      * <p>
      * If you serialize this constant on Windows, and deserialize on Unix, or vice
@@ -76,7 +77,7 @@ public enum IOCase {
      * @throws IllegalArgumentException if the name is invalid
      */
     public static IOCase forName(final String name) {
-        return Stream.of(IOCase.values()).filter(ioCase -> ioCase.getName().equals(name)).findFirst()
+        return Stream.of(values()).filter(ioCase -> ioCase.getName().equals(name)).findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("Illegal IOCase name: " + name));
     }
 
