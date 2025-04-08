@@ -24,7 +24,7 @@ import java.util.stream.Stream;
 
 public abstract class AbstractIOFileFilterTest {
 
-    class TesterFalseFileFilter extends FalseFileFilter {
+    final class TesterFalseFileFilter extends FalseFileFilter {
 
         private static final long serialVersionUID = -3603047664010401872L;
         private boolean invoked;
@@ -54,7 +54,7 @@ public abstract class AbstractIOFileFilterTest {
         }
     }
 
-    class TesterTrueFileFilter extends TrueFileFilter {
+    final class TesterTrueFileFilter extends TrueFileFilter {
 
         private static final long serialVersionUID = 1828930358172422914L;
         private boolean invoked;
@@ -111,16 +111,11 @@ public abstract class AbstractIOFileFilterTest {
         assertEquals(expected, filter.accept(file.toPath(), null),
                 "test " + testNumber + " Filter(File) " + filter.getClass().getName() + " not " + expected + " for " + file);
 
-        if (file != null && file.getParentFile() != null) {
+        if (file.getParentFile() != null) {
             assertEquals(expected, filter.accept(file.getParentFile(), file.getName()),
                     "test " + testNumber + " Filter(File, String) " + filter.getClass().getName() + " not " + expected + " for " + file);
             assertEquals(expected, filter.matches(file.toPath()),
                     "test " + testNumber + " Filter(File) " + filter.getClass().getName() + " not " + expected + " for " + file);
-        } else if (file == null) {
-            assertEquals(expected, filter.accept(file),
-                    "test " + testNumber + " Filter(File, String) " + filter.getClass().getName() + " not " + expected + " for null");
-            assertEquals(expected, filter.matches(null),
-                    "test " + testNumber + " Filter(File, String) " + filter.getClass().getName() + " not " + expected + " for null");
         }
     }
 

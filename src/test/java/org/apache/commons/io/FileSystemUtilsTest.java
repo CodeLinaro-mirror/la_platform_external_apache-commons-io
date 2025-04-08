@@ -31,6 +31,10 @@ import java.time.Duration;
 import java.util.Locale;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledOnOs;
+import org.junit.jupiter.api.condition.OS;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
 /**
  * Tests {@link FileSystemUtils}.
@@ -54,13 +58,15 @@ public class FileSystemUtilsTest {
         }
 
         @Override
-        Process openProcess(final String[] params) {
+        Process openProcess(final String[] cmdArray) {
             if (cmd != null) {
-                assertEquals(cmd, params[params.length - 1]);
+                assertEquals(cmd, cmdArray[cmdArray.length - 1]);
             }
             return new Process() {
+
                 @Override
                 public void destroy() {
+                    // nnop
                 }
 
                 @Override
@@ -93,11 +99,15 @@ public class FileSystemUtilsTest {
 
     private static final Duration NEG_1_TIMEOUT = Duration.ofMillis(-1);
 
+    static char[] getIllegalFileNameChars() {
+        return FileSystem.getCurrent().getIllegalFileNameChars();
+    }
+
     @Test
     public void testGetFreeSpace_String() throws Exception {
         // test coverage, as we can't check value
         if (File.separatorChar == '/') {
-            // have to figure out Unix block size
+            // have to figure out UNIX block size
             final String[] cmd;
             String osName = System.getProperty("os.name");
             osName = osName.toLowerCase(Locale.ENGLISH);
@@ -332,6 +342,19 @@ public class FileSystemUtilsTest {
         assertEquals(189416L, fsu.freeSpaceUnix("/", false, false, NEG_1_TIMEOUT));
     }
 
+    @EnabledOnOs(value = OS.WINDOWS)
+    @ParameterizedTest
+    @MethodSource("getIllegalFileNameChars")
+    public void testGetFreeSpaceWindows_IllegalFileName(final char illegalFileNameChar) throws Exception {
+        assertThrows(IllegalArgumentException.class, () -> new FileSystemUtils().freeSpaceWindows("\\ \"" + illegalFileNameChar, NEG_1_TIMEOUT));
+    }
+
+    @EnabledOnOs(value = OS.WINDOWS)
+    @Test
+    public void testGetFreeSpaceWindows_IllegalFileNames() throws Exception {
+        assertThrows(IllegalArgumentException.class, () -> new FileSystemUtils().freeSpaceWindows("\\ \"", NEG_1_TIMEOUT));
+    }
+
     @Test
     public void testGetFreeSpaceWindows_String_EmptyMultiLineResponse() {
         final String lines = "\n\n";
@@ -353,7 +376,7 @@ public class FileSystemUtilsTest {
                         "17/08/2005  21:44    <DIR>          Desktop\n" +
                         "               7 File(s)         180260 bytes\n" +
                         "              10 Dir(s)     41411551232 bytes free";
-        final FileSystemUtils fsu = new MockFileSystemUtils(0, lines, "dir /a /-c ");
+        final FileSystemUtils fsu = new MockFileSystemUtils(0, lines, "dir /a /-c \"\"");
         assertEquals(41411551232L, fsu.freeSpaceWindows("", NEG_1_TIMEOUT));
     }
 
@@ -370,7 +393,6 @@ public class FileSystemUtilsTest {
         final FileSystemUtils fsu = new MockFileSystemUtils(0, lines);
         assertThrows(IOException.class, () -> fsu.freeSpaceWindows("C:", NEG_1_TIMEOUT));
     }
-
     @Test
     public void testGetFreeSpaceWindows_String_NormalResponse() throws Exception {
         final String lines =
@@ -388,6 +410,7 @@ public class FileSystemUtilsTest {
         final FileSystemUtils fsu = new MockFileSystemUtils(0, lines, "dir /a /-c \"C:\"");
         assertEquals(41411551232L, fsu.freeSpaceWindows("C:", NEG_1_TIMEOUT));
     }
+
     @Test
     public void testGetFreeSpaceWindows_String_NoSuchDirectoryResponse() {
         final String lines =

@@ -48,7 +48,7 @@ import org.apache.commons.io.charset.CharsetDecoders;
  * would have the same result as writing to {@code out} directly (provided that the byte sequence is legal with respect to the charset encoding):
  * </p>
  * <p>
- * To build an instance, see {@link Builder}.
+ * To build an instance, use {@link Builder}.
  * </p>
  * <pre>
  * OutputStream out = ...
@@ -73,13 +73,16 @@ import org.apache.commons.io.charset.CharsetDecoders;
  * Instances of {@link WriterOutputStream} are not thread safe.
  * </p>
  *
+ * @see Builder
  * @see org.apache.commons.io.input.ReaderInputStream
  * @since 2.0
  */
 public class WriterOutputStream extends OutputStream {
 
+    // @formatter:off
     /**
-     * Builds a new {@link WriterOutputStream} instance.
+     * Builds a new {@link WriterOutputStream}.
+     *
      * <p>
      * For example:
      * </p>
@@ -92,8 +95,10 @@ public class WriterOutputStream extends OutputStream {
      *   .get();}
      * </pre>
      *
+     * @see #get()
      * @since 2.12.0
      */
+    // @formatter:on
     public static class Builder extends AbstractStreamBuilder<WriterOutputStream, Builder> {
 
         private CharsetDecoder charsetDecoder;
@@ -107,14 +112,19 @@ public class WriterOutputStream extends OutputStream {
         }
 
         /**
-         * Constructs a new instance.
+         * Builds a new {@link WriterOutputStream}.
          * <p>
-         * This builder use the aspect Writer, OpenOption[], Charset, CharsetDecoder, buffer size and writeImmediately.
+         * You must set input that supports {@link #getWriter()} on this builder, otherwise, this method throws an exception.
          * </p>
          * <p>
-         * You must provide an origin that can be converted to a Writer by this builder, otherwise, this call will throw an
-         * {@link UnsupportedOperationException}.
+         * This builder use the following aspects:
          * </p>
+         * <ul>
+         * <li>{@link #getWriter()}</li>
+         * <li>{@link #getBufferSize()}</li>
+         * <li>charsetDecoder</li>
+         * <li>writeImmediately</li>
+         * </ul>
          *
          * @return a new instance.
          * @throws UnsupportedOperationException if the origin cannot provide a Writer.

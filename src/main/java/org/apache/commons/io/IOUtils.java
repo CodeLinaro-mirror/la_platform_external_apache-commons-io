@@ -145,7 +145,7 @@ public class IOUtils {
     public static final char DIR_SEPARATOR = File.separatorChar;
 
     /**
-     * The Unix directory separator character.
+     * The UNIX directory separator character.
      */
     public static final char DIR_SEPARATOR_UNIX = '/';
 
@@ -183,7 +183,7 @@ public class IOUtils {
     public static final String LINE_SEPARATOR = System.lineSeparator();
 
     /**
-     * The Unix line separator string.
+     * The UNIX line separator string.
      *
      * @see StandardLineSeparator#LF
      */
@@ -1123,7 +1123,7 @@ public class IOUtils {
      * @throws NullPointerException if the input or output is null
      * @throws IOException          if an I/O error occurs
      * @since 1.1
-     * @deprecated 2.5 use {@link #copy(InputStream, Writer, Charset)} instead
+     * @deprecated Use {@link #copy(InputStream, Writer, Charset)} instead
      */
     @Deprecated
     public static void copy(final InputStream input, final Writer writer)
@@ -1164,7 +1164,7 @@ public class IOUtils {
      * </p>
      * <p>
      * Character encoding names can be found at
-     * <a href="http://www.iana.org/assignments/character-sets">IANA</a>.
+     * <a href="https://www.iana.org/assignments/character-sets">IANA</a>.
      * </p>
      * <p>
      * This method uses {@link InputStreamReader}.
@@ -1175,9 +1175,7 @@ public class IOUtils {
      * @param inputCharsetName the name of the requested charset for the InputStream, null means platform default
      * @throws NullPointerException                         if the input or output is null
      * @throws IOException                                  if an I/O error occurs
-     * @throws java.nio.charset.UnsupportedCharsetException thrown instead of {@link java.io
-     *                                                      .UnsupportedEncodingException} in version 2.2 if the
-     *                                                      encoding is not supported.
+     * @throws java.nio.charset.UnsupportedCharsetException if the encoding is not supported
      * @since 1.1
      */
     public static void copy(final InputStream input, final Writer writer, final String inputCharsetName)
@@ -1287,7 +1285,7 @@ public class IOUtils {
      * @throws NullPointerException if the input or output is null
      * @throws IOException          if an I/O error occurs
      * @since 1.1
-     * @deprecated 2.5 use {@link #copy(Reader, OutputStream, Charset)} instead
+     * @deprecated Use {@link #copy(Reader, OutputStream, Charset)} instead
      */
     @Deprecated
     public static void copy(final Reader reader, final OutputStream output)
@@ -1352,9 +1350,7 @@ public class IOUtils {
      * @param outputCharsetName the name of the requested charset for the OutputStream, null means platform default
      * @throws NullPointerException                         if the input or output is null
      * @throws IOException                                  if an I/O error occurs
-     * @throws java.nio.charset.UnsupportedCharsetException thrown instead of {@link java.io
-     *                                                      .UnsupportedEncodingException} in version 2.2 if the
-     *                                                      encoding is not supported.
+     * @throws java.nio.charset.UnsupportedCharsetException if the encoding is not supported
      * @since 1.1
      */
     public static void copy(final Reader reader, final OutputStream output, final String outputCharsetName)
@@ -1509,7 +1505,7 @@ public class IOUtils {
      * @param output the {@link OutputStream} to write to
      * @param inputOffset : number of bytes to skip from input before copying
      * -ve values are ignored
-     * @param length : number of bytes to copy. -ve means all
+     * @param length number of bytes to copy. -ve means all
      * @return the number of bytes copied
      * @throws NullPointerException if the input or output is null
      * @throws IOException          if an I/O error occurs
@@ -1535,9 +1531,9 @@ public class IOUtils {
      *
      * @param input the {@link InputStream} to read
      * @param output the {@link OutputStream} to write to
-     * @param inputOffset : number of bytes to skip from input before copying
+     * @param inputOffset number of bytes to skip from input before copying
      * -ve values are ignored
-     * @param length : number of bytes to copy. -ve means all
+     * @param length number of bytes to copy. -ve means all
      * @param buffer the buffer to use for the copy
      * @return the number of bytes copied
      * @throws NullPointerException if the input or output is null
@@ -1629,9 +1625,9 @@ public class IOUtils {
      *
      * @param reader the {@link Reader} to read
      * @param writer the {@link Writer} to write to
-     * @param inputOffset : number of chars to skip from input before copying
+     * @param inputOffset number of chars to skip from input before copying
      * -ve values are ignored
-     * @param length : number of chars to copy. -ve means all
+     * @param length number of chars to copy. -ve means all
      * @return the number of chars copied
      * @throws NullPointerException if the input or output is null
      * @throws IOException          if an I/O error occurs
@@ -1652,9 +1648,9 @@ public class IOUtils {
      *
      * @param reader the {@link Reader} to read
      * @param writer the {@link Writer} to write to
-     * @param inputOffset : number of chars to skip from input before copying
+     * @param inputOffset number of chars to skip from input before copying
      * -ve values are ignored
-     * @param length : number of chars to copy. -ve means all
+     * @param length number of chars to copy. -ve means all
      * @param buffer the buffer to be used for the copy
      * @return the number of chars copied
      * @throws NullPointerException if the input or output is null
@@ -1853,9 +1849,7 @@ public class IOUtils {
      * @param charsetName the encoding to use, null means platform default
      * @return an Iterator of the lines in the reader, never null
      * @throws IllegalArgumentException                     if the input is null
-     * @throws java.nio.charset.UnsupportedCharsetException thrown instead of {@link java.io
-     *                                                      .UnsupportedEncodingException} in version 2.2 if the
-     *                                                      encoding is not supported.
+     * @throws java.nio.charset.UnsupportedCharsetException if the encoding is not supported
      * @since 1.2
      */
     public static LineIterator lineIterator(final InputStream input, final String charsetName) {
@@ -1888,7 +1882,7 @@ public class IOUtils {
      *
      * @param reader the {@link Reader} to read, not null
      * @return an Iterator of the lines in the reader, never null
-     * @throws IllegalArgumentException if the reader is null
+     * @throws NullPointerException if the reader is null
      * @since 1.2
      */
     public static LineIterator lineIterator(final Reader reader) {
@@ -2178,7 +2172,7 @@ public class IOUtils {
      * @throws NullPointerException if the input is null
      * @throws UncheckedIOException if an I/O error occurs
      * @since 1.1
-     * @deprecated 2.5 use {@link #readLines(InputStream, Charset)} instead
+     * @deprecated Use {@link #readLines(InputStream, Charset)} instead
      */
     @Deprecated
     public static List<String> readLines(final InputStream input) throws UncheckedIOException {
@@ -2221,9 +2215,7 @@ public class IOUtils {
      * @return the list of Strings, never null
      * @throws NullPointerException                         if the input is null
      * @throws UncheckedIOException                         if an I/O error occurs
-     * @throws java.nio.charset.UnsupportedCharsetException thrown instead of {@link java.io
-     *                                                      .UnsupportedEncodingException} in version 2.2 if the
-     *                                                      encoding is not supported.
+     * @throws java.nio.charset.UnsupportedCharsetException if the encoding is not supported
      * @since 1.1
      */
     public static List<String> readLines(final InputStream input, final String charsetName) throws UncheckedIOException {
@@ -2799,7 +2791,7 @@ public class IOUtils {
      * @return the requested byte array
      * @throws NullPointerException if the input is null
      * @throws IOException          if an I/O error occurs
-     * @deprecated 2.5 use {@link #toByteArray(Reader, Charset)} instead
+     * @deprecated Use {@link #toByteArray(Reader, Charset)} instead
      */
     @Deprecated
     public static byte[] toByteArray(final Reader reader) throws IOException {
@@ -2845,9 +2837,7 @@ public class IOUtils {
      * @return the requested byte array
      * @throws NullPointerException                         if the input is null
      * @throws IOException                                  if an I/O error occurs
-     * @throws java.nio.charset.UnsupportedCharsetException thrown instead of {@link java.io
-     *                                                      .UnsupportedEncodingException} in version 2.2 if the
-     *                                                      encoding is not supported.
+     * @throws java.nio.charset.UnsupportedCharsetException if the encoding is not supported
      * @since 1.1
      */
     public static byte[] toByteArray(final Reader reader, final String charsetName) throws IOException {
@@ -2864,7 +2854,7 @@ public class IOUtils {
      * @param input the {@link String} to convert
      * @return the requested byte array
      * @throws NullPointerException if the input is null
-     * @deprecated 2.5 Use {@link String#getBytes()} instead
+     * @deprecated Use {@link String#getBytes()} instead
      */
     @Deprecated
     public static byte[] toByteArray(final String input) {
@@ -2928,7 +2918,7 @@ public class IOUtils {
      * @throws NullPointerException if the input is null
      * @throws IOException          if an I/O error occurs
      * @since 1.1
-     * @deprecated 2.5 use {@link #toCharArray(InputStream, Charset)} instead
+     * @deprecated Use {@link #toCharArray(InputStream, Charset)} instead
      */
     @Deprecated
     public static char[] toCharArray(final InputStream inputStream) throws IOException {
@@ -2974,9 +2964,7 @@ public class IOUtils {
      * @return the requested character array
      * @throws NullPointerException                         if the input is null
      * @throws IOException                                  if an I/O error occurs
-     * @throws java.nio.charset.UnsupportedCharsetException thrown instead of {@link java.io
-     *                                                      .UnsupportedEncodingException} in version 2.2 if the
-     *                                                      encoding is not supported.
+     * @throws java.nio.charset.UnsupportedCharsetException if the encoding is not supported
      * @since 1.1
      */
     public static char[] toCharArray(final InputStream inputStream, final String charsetName) throws IOException {
@@ -3009,7 +2997,7 @@ public class IOUtils {
      * @param input the CharSequence to convert
      * @return an input stream
      * @since 2.0
-     * @deprecated 2.5 use {@link #toInputStream(CharSequence, Charset)} instead
+     * @deprecated Use {@link #toInputStream(CharSequence, Charset)} instead
      */
     @Deprecated
     public static InputStream toInputStream(final CharSequence input) {
@@ -3040,9 +3028,7 @@ public class IOUtils {
      * @param input the CharSequence to convert
      * @param charsetName the name of the requested charset, null means platform default
      * @return an input stream
-     * @throws java.nio.charset.UnsupportedCharsetException thrown instead of {@link java.io
-     *                                                      .UnsupportedEncodingException} in version 2.2 if the
-     *                                                      encoding is not supported.
+     * @throws java.nio.charset.UnsupportedCharsetException if the encoding is not supported
      * @since 2.0
      */
     public static InputStream toInputStream(final CharSequence input, final String charsetName) {
@@ -3056,7 +3042,7 @@ public class IOUtils {
      * @param input the string to convert
      * @return an input stream
      * @since 1.1
-     * @deprecated 2.5 use {@link #toInputStream(String, Charset)} instead
+     * @deprecated Use {@link #toInputStream(String, Charset)} instead
      */
     @Deprecated
     public static InputStream toInputStream(final String input) {
@@ -3087,9 +3073,7 @@ public class IOUtils {
      * @param input the string to convert
      * @param charsetName the name of the requested charset, null means platform default
      * @return an input stream
-     * @throws java.nio.charset.UnsupportedCharsetException thrown instead of {@link java.io
-     *                                                      .UnsupportedEncodingException} in version 2.2 if the
-     *                                                      encoding is not supported.
+     * @throws java.nio.charset.UnsupportedCharsetException if the encoding is not supported
      * @since 1.1
      */
     public static InputStream toInputStream(final String input, final String charsetName) {
@@ -3103,7 +3087,7 @@ public class IOUtils {
      * @param input the byte array to read
      * @return the requested String
      * @throws NullPointerException if the input is null
-     * @deprecated 2.5 Use {@link String#String(byte[])} instead
+     * @deprecated Use {@link String#String(byte[])} instead
      */
     @Deprecated
     public static String toString(final byte[] input) {
@@ -3140,7 +3124,7 @@ public class IOUtils {
      * @return the requested String
      * @throws NullPointerException if the input is null
      * @throws IOException          if an I/O error occurs
-     * @deprecated 2.5 use {@link #toString(InputStream, Charset)} instead
+     * @deprecated Use {@link #toString(InputStream, Charset)} instead
      */
     @Deprecated
     public static String toString(final InputStream input) throws IOException {
@@ -3186,9 +3170,7 @@ public class IOUtils {
      * @return the requested String
      * @throws NullPointerException                         if the input is null
      * @throws IOException                                  if an I/O error occurs
-     * @throws java.nio.charset.UnsupportedCharsetException thrown instead of {@link java.io
-     *                                                      .UnsupportedEncodingException} in version 2.2 if the
-     *                                                      encoding is not supported.
+     * @throws java.nio.charset.UnsupportedCharsetException if the encoding is not supported
      */
     public static String toString(final InputStream input, final String charsetName)
             throws IOException {
@@ -3267,7 +3249,7 @@ public class IOUtils {
      * @return The contents of the URL as a String.
      * @throws IOException if an I/O exception occurs.
      * @since 2.1
-     * @deprecated 2.5 use {@link #toString(URI, Charset)} instead
+     * @deprecated Use {@link #toString(URI, Charset)} instead
      */
     @Deprecated
     public static String toString(final URI uri) throws IOException {
@@ -3294,9 +3276,7 @@ public class IOUtils {
      * @param charsetName The encoding name for the URL contents.
      * @return The contents of the URL as a String.
      * @throws IOException                                  if an I/O exception occurs.
-     * @throws java.nio.charset.UnsupportedCharsetException thrown instead of {@link java.io
-     *                                                      .UnsupportedEncodingException} in version 2.2 if the
-     *                                                      encoding is not supported.
+     * @throws java.nio.charset.UnsupportedCharsetException if the encoding is not supported
      * @since 2.1
      */
     public static String toString(final URI uri, final String charsetName) throws IOException {
@@ -3310,7 +3290,7 @@ public class IOUtils {
      * @return The contents of the URL as a String.
      * @throws IOException if an I/O exception occurs.
      * @since 2.1
-     * @deprecated 2.5 use {@link #toString(URL, Charset)} instead
+     * @deprecated Use {@link #toString(URL, Charset)} instead
      */
     @Deprecated
     public static String toString(final URL url) throws IOException {
@@ -3337,9 +3317,7 @@ public class IOUtils {
      * @param charsetName The encoding name for the URL contents.
      * @return The contents of the URL as a String.
      * @throws IOException                                  if an I/O exception occurs.
-     * @throws java.nio.charset.UnsupportedCharsetException thrown instead of {@link java.io
-     *                                                      .UnsupportedEncodingException} in version 2.2 if the
-     *                                                      encoding is not supported.
+     * @throws java.nio.charset.UnsupportedCharsetException if the encoding is not supported
      * @since 2.1
      */
     public static String toString(final URL url, final String charsetName) throws IOException {
@@ -3376,7 +3354,7 @@ public class IOUtils {
      * @throws NullPointerException if output is null
      * @throws IOException          if an I/O error occurs
      * @since 1.1
-     * @deprecated 2.5 use {@link #write(byte[], Writer, Charset)} instead
+     * @deprecated Use {@link #write(byte[], Writer, Charset)} instead
      */
     @Deprecated
     public static void write(final byte[] data, final Writer writer) throws IOException {
@@ -3421,9 +3399,7 @@ public class IOUtils {
      * @param charsetName the name of the requested charset, null means platform default
      * @throws NullPointerException                         if output is null
      * @throws IOException                                  if an I/O error occurs
-     * @throws java.nio.charset.UnsupportedCharsetException thrown instead of {@link java.io
-     *                                                      .UnsupportedEncodingException} in version 2.2 if the
-     *                                                      encoding is not supported.
+     * @throws java.nio.charset.UnsupportedCharsetException if the encoding is not supported
      * @since 1.1
      */
     public static void write(final byte[] data, final Writer writer, final String charsetName) throws IOException {
@@ -3444,7 +3420,7 @@ public class IOUtils {
      * @throws NullPointerException if output is null
      * @throws IOException          if an I/O error occurs
      * @since 1.1
-     * @deprecated 2.5 use {@link #write(char[], OutputStream, Charset)} instead
+     * @deprecated Use {@link #write(char[], OutputStream, Charset)} instead
      */
     @Deprecated
     public static void write(final char[] data, final OutputStream output)
@@ -3492,8 +3468,7 @@ public class IOUtils {
      * @param charsetName the name of the requested charset, null means platform default
      * @throws NullPointerException                         if output is null
      * @throws IOException                                  if an I/O error occurs
-     * @throws java.nio.charset.UnsupportedCharsetException thrown instead of {@link java.io
-     * .UnsupportedEncodingException} in version 2.2 if the encoding is not supported.
+     * @throws java.nio.charset.UnsupportedCharsetException if the encoding is not supported
      * @since 1.1
      */
     public static void write(final char[] data, final OutputStream output, final String charsetName)
@@ -3530,7 +3505,7 @@ public class IOUtils {
      * @throws NullPointerException if output is null
      * @throws IOException          if an I/O error occurs
      * @since 2.0
-     * @deprecated 2.5 use {@link #write(CharSequence, OutputStream, Charset)} instead
+     * @deprecated Use {@link #write(CharSequence, OutputStream, Charset)} instead
      */
     @Deprecated
     public static void write(final CharSequence data, final OutputStream output)
@@ -3575,15 +3550,13 @@ public class IOUtils {
      * @param charsetName the name of the requested charset, null means platform default
      * @throws NullPointerException        if output is null
      * @throws IOException                 if an I/O error occurs
-     * @throws java.nio.charset.UnsupportedCharsetException thrown instead of {@link java.io
-     * .UnsupportedEncodingException} in version 2.2 if the encoding is not supported.
+     * @throws java.nio.charset.UnsupportedCharsetException if the encoding is not supported
      * @since 2.0
      */
     public static void write(final CharSequence data, final OutputStream output, final String charsetName)
             throws IOException {
         write(data, output, Charsets.toCharset(charsetName));
     }
-
 
     /**
      * Writes chars from a {@link CharSequence} to a {@link Writer}.
@@ -3613,7 +3586,7 @@ public class IOUtils {
      * @throws NullPointerException if output is null
      * @throws IOException          if an I/O error occurs
      * @since 1.1
-     * @deprecated 2.5 use {@link #write(String, OutputStream, Charset)} instead
+     * @deprecated Use {@link #write(String, OutputStream, Charset)} instead
      */
     @Deprecated
     public static void write(final String data, final OutputStream output)
@@ -3661,8 +3634,7 @@ public class IOUtils {
      * @param charsetName the name of the requested charset, null means platform default
      * @throws NullPointerException        if output is null
      * @throws IOException                 if an I/O error occurs
-     * @throws java.nio.charset.UnsupportedCharsetException thrown instead of {@link java.io
-     * .UnsupportedEncodingException} in version 2.2 if the encoding is not supported.
+     * @throws java.nio.charset.UnsupportedCharsetException if the encoding is not supported
      * @since 1.1
      */
     public static void write(final String data, final OutputStream output, final String charsetName)
@@ -3722,8 +3694,7 @@ public class IOUtils {
      * @param charsetName the name of the requested charset, null means platform default
      * @throws NullPointerException        if output is null
      * @throws IOException                 if an I/O error occurs
-     * @throws java.nio.charset.UnsupportedCharsetException thrown instead of {@link java.io
-     * .UnsupportedEncodingException} in version 2.2 if the encoding is not supported.
+     * @throws java.nio.charset.UnsupportedCharsetException if the encoding is not supported
      * @since 1.1
      * @deprecated Use {@link #write(CharSequence, OutputStream, String)}.
      */
@@ -3815,7 +3786,7 @@ public class IOUtils {
      * @throws NullPointerException if the output is null
      * @throws IOException          if an I/O error occurs
      * @since 1.1
-     * @deprecated 2.5 use {@link #writeLines(Collection, String, OutputStream, Charset)} instead
+     * @deprecated Use {@link #writeLines(Collection, String, OutputStream, Charset)} instead
      */
     @Deprecated
     public static void writeLines(final Collection<?> lines, final String lineEnding,
@@ -3829,7 +3800,7 @@ public class IOUtils {
      * encoding and the specified line ending.
      * <p>
      * UTF-16 is written big-endian with no byte order mark.
-     * For little endian, use UTF-16LE. For a BOM, write it to the stream
+     * For little-endian, use UTF-16LE. For a BOM, write it to the stream
      * before calling this method.
      * </p>
      *
@@ -3877,9 +3848,7 @@ public class IOUtils {
      * @param charsetName the name of the requested charset, null means platform default
      * @throws NullPointerException                         if the output is null
      * @throws IOException                                  if an I/O error occurs
-     * @throws java.nio.charset.UnsupportedCharsetException thrown instead of {@link java.io
-     *                                                      .UnsupportedEncodingException} in version 2.2 if the
-     *                                                      encoding is not supported.
+     * @throws java.nio.charset.UnsupportedCharsetException if the encoding is not supported
      * @since 1.1
      */
     public static void writeLines(final Collection<?> lines, final String lineEnding,
@@ -3936,10 +3905,12 @@ public class IOUtils {
 
     /**
      * Instances should NOT be constructed in standard programming.
-     * @deprecated Will be private in 3.0.
+     *
+     * @deprecated TODO Make private in 3.0.
      */
     @Deprecated
     public IOUtils() { //NOSONAR
+        // empty
     }
 
 }

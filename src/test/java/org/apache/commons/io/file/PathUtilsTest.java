@@ -154,7 +154,8 @@ public class PathUtilsTest extends AbstractTempDirTest {
     @Test
     public void testCopyDirectoryForDifferentFilesystemsWithRelativePath() throws IOException {
         final Path archivePath = Paths.get(TEST_JAR_PATH);
-        try (FileSystem archive = openArchive(archivePath, false); final FileSystem targetArchive = openArchive(tempDirPath.resolve(TEST_JAR_NAME), true)) {
+        try (FileSystem archive = openArchive(archivePath, false);
+                final FileSystem targetArchive = openArchive(tempDirPath.resolve(TEST_JAR_NAME), true)) {
             final Path targetDir = targetArchive.getPath("targetDir");
             Files.createDirectory(targetDir);
             // relative jar -> relative dir
@@ -246,6 +247,68 @@ public class PathUtilsTest extends AbstractTempDirTest {
     }
 
     @Test
+    public void testGetBaseNamePathBaseCases() {
+        assertEquals("bar", PathUtils.getBaseName(Paths.get("a/b/c/bar.foo")));
+        assertEquals("foo", PathUtils.getBaseName(Paths.get("foo")));
+        assertEquals("", PathUtils.getBaseName(Paths.get("")));
+        assertEquals("", PathUtils.getBaseName(Paths.get(".")));
+        for (final File f : File.listRoots()) {
+            assertNull(PathUtils.getBaseName(f.toPath()));
+        }
+        if (SystemUtils.IS_OS_WINDOWS) {
+            assertNull(PathUtils.getBaseName(Paths.get("C:\\")));
+        }
+    }
+
+    @Test
+    public void testGetBaseNamePathCornerCases() {
+        assertNull(PathUtils.getBaseName((Path) null));
+        assertEquals("foo", PathUtils.getBaseName(Paths.get("foo.")));
+        assertEquals("", PathUtils.getBaseName(Paths.get("bar/.foo")));
+    }
+
+    @Test
+    public void testGetExtension() {
+        assertNull(PathUtils.getExtension(null));
+        assertEquals("ext", PathUtils.getExtension(Paths.get("file.ext")));
+        assertEquals("", PathUtils.getExtension(Paths.get("README")));
+        assertEquals("com", PathUtils.getExtension(Paths.get("domain.dot.com")));
+        assertEquals("jpeg", PathUtils.getExtension(Paths.get("image.jpeg")));
+        assertEquals("", PathUtils.getExtension(Paths.get("a.b/c")));
+        assertEquals("txt", PathUtils.getExtension(Paths.get("a.b/c.txt")));
+        assertEquals("", PathUtils.getExtension(Paths.get("a/b/c")));
+        assertEquals("", PathUtils.getExtension(Paths.get("a.b\\c")));
+        assertEquals("txt", PathUtils.getExtension(Paths.get("a.b\\c.txt")));
+        assertEquals("", PathUtils.getExtension(Paths.get("a\\b\\c")));
+        assertEquals("", PathUtils.getExtension(Paths.get("C:\\temp\\foo.bar\\README")));
+        assertEquals("ext", PathUtils.getExtension(Paths.get("../filename.ext")));
+
+        if (File.separatorChar != '\\') {
+            // Upwards compatibility:
+            assertEquals("txt", PathUtils.getExtension(Paths.get("foo.exe:bar.txt")));
+        }
+    }
+
+    @Test
+    public void testGetFileName() {
+        assertNull(PathUtils.getFileName(null, null));
+        assertNull(PathUtils.getFileName(null, Path::toString));
+        assertNull(PathUtils.getFileName(Paths.get("/"), Path::toString));
+        assertNull(PathUtils.getFileName(Paths.get("/"), Path::toString));
+        assertEquals("", PathUtils.getFileName(Paths.get(""), Path::toString));
+        assertEquals("a", PathUtils.getFileName(Paths.get("a"), Path::toString));
+        assertEquals("a", PathUtils.getFileName(Paths.get("p", "a"), Path::toString));
+    }
+
+    @Test
+    public void testGetFileNameString() {
+        assertNull(PathUtils.getFileNameString(Paths.get("/")));
+        assertEquals("", PathUtils.getFileNameString(Paths.get("")));
+        assertEquals("a", PathUtils.getFileNameString(Paths.get("a")));
+        assertEquals("a", PathUtils.getFileNameString(Paths.get("p", "a")));
+    }
+
+    @Test
     public void testGetLastModifiedFileTime_File_Present() throws IOException {
         assertNotNull(PathUtils.getLastModifiedFileTime(current().toFile()));
     }
@@ -330,7 +393,7 @@ public class PathUtilsTest extends AbstractTempDirTest {
         try (DirectoryStream<Path> stream = PathUtils.newDirectoryStream(current(), pathFilter)) {
             final Iterator<Path> iterator = stream.iterator();
             final Path path = iterator.next();
-            assertEquals(PATH_FIXTURE, path.getFileName().toString());
+            assertEquals(PATH_FIXTURE, PathUtils.getFileNameString(path));
             assertFalse(iterator.hasNext());
         }
     }

@@ -23,7 +23,7 @@ import java.util.stream.Stream;
  * Enumeration of IO case sensitivity.
  * <p>
  * Different filing systems have different rules for case-sensitivity.
- * Windows is case-insensitive, Unix is case-sensitive.
+ * Windows is case-insensitive, UNIX is case-sensitive.
  * </p>
  * <p>
  * This class captures that difference, providing an enumeration to
@@ -51,11 +51,11 @@ public enum IOCase {
 
     /**
      * The constant for case sensitivity determined by the current operating system.
-     * Windows is case-insensitive when comparing file names, Unix is case-sensitive.
+     * Windows is case-insensitive when comparing file names, UNIX is case-sensitive.
      * <p>
      * <strong>Note:</strong> This only caters for Windows and Unix. Other operating
      * systems (e.g. OSX and OpenVMS) are treated as case-sensitive if they use the
-     * Unix file separator and case-insensitive if they use the Windows file separator
+     * UNIX file separator and case-insensitive if they use the Windows file separator
      * (see {@link java.io.File#separatorChar}).
      * </p>
      * <p>
@@ -69,7 +69,7 @@ public enum IOCase {
     private static final long serialVersionUID = -6343169151696340687L;
 
     /**
-     * Factory method to create an IOCase from a name.
+     * Looks up an IOCase by name.
      *
      * @param name  the name to find
      * @return the IOCase object
@@ -112,8 +112,8 @@ public enum IOCase {
     /**
      * Constructs a new instance.
      *
-     * @param name  the name
-     * @param sensitive  the sensitivity
+     * @param name  the name.
+     * @param sensitive  the sensitivity.
      */
     IOCase(final String name, final boolean sensitive) {
         this.name = name;
@@ -127,10 +127,10 @@ public enum IOCase {
      * into account.
      * </p>
      *
-     * @param str1  the first string to compare, not null
-     * @param str2  the second string to compare, not null
-     * @return true if equal using the case rules
-     * @throws NullPointerException if either string is null
+     * @param str1  the first string to compare, not null.
+     * @param str2  the second string to compare, not null.
+     * @return true if equal using the case rules.
+     * @throws NullPointerException if either string is null.
      */
     public int checkCompareTo(final String str1, final String str2) {
         Objects.requireNonNull(str1, "str1");
@@ -145,9 +145,9 @@ public enum IOCase {
      * into account.
      * </p>
      *
-     * @param str  the string to check
-     * @param end  the end to compare against
-     * @return true if equal using the case rules, false if either input is null
+     * @param str  the string to check.
+     * @param end  the end to compare against.
+     * @return true if equal using the case rules, false if either input is null.
      */
     public boolean checkEndsWith(final String str, final String end) {
         if (str == null || end == null) {
@@ -164,15 +164,12 @@ public enum IOCase {
      * into account.
      * </p>
      *
-     * @param str1  the first string to compare, not null
-     * @param str2  the second string to compare, not null
-     * @return true if equal using the case rules
-     * @throws NullPointerException if either string is null
+     * @param str1  the first string to compare.
+     * @param str2  the second string to compare.
+     * @return true if equal using the case rules.
      */
     public boolean checkEquals(final String str1, final String str2) {
-        Objects.requireNonNull(str1, "str1");
-        Objects.requireNonNull(str2, "str2");
-        return sensitive ? str1.equals(str2) : str1.equalsIgnoreCase(str2);
+        return str1 == str2 || str1 != null && (sensitive ? str1.equals(str2) : str1.equalsIgnoreCase(str2));
     }
 
     /**
@@ -183,20 +180,21 @@ public enum IOCase {
      * but takes case-sensitivity into account.
      * </p>
      *
-     * @param str  the string to check, not null
-     * @param strStartIndex  the index to start at in str
-     * @param search  the start to search for, not null
+     * @param str  the string to check.
+     * @param strStartIndex  the index to start at in str.
+     * @param search  the start to search for.
      * @return the first index of the search String,
-     *  -1 if no match or {@code null} string input
-     * @throws NullPointerException if either string is null
+     *  -1 if no match or {@code null} string input.
      * @since 2.0
      */
     public int checkIndexOf(final String str, final int strStartIndex, final String search) {
-        final int endIndex = str.length() - search.length();
-        if (endIndex >= strStartIndex) {
-            for (int i = strStartIndex; i <= endIndex; i++) {
-                if (checkRegionMatches(str, i, search)) {
-                    return i;
+        if (str != null && search != null) {
+            final int endIndex = str.length() - search.length();
+            if (endIndex >= strStartIndex) {
+                for (int i = strStartIndex; i <= endIndex; i++) {
+                    if (checkRegionMatches(str, i, search)) {
+                        return i;
+                    }
                 }
             }
         }
@@ -210,14 +208,13 @@ public enum IOCase {
      * but takes case-sensitivity into account.
      * </p>
      *
-     * @param str  the string to check, not null
-     * @param strStartIndex  the index to start at in str
-     * @param search  the start to search for, not null
-     * @return true if equal using the case rules
-     * @throws NullPointerException if either string is null
+     * @param str  the string to check.
+     * @param strStartIndex  the index to start at in str.
+     * @param search  the start to search for,.
+     * @return true if equal using the case rules.
      */
     public boolean checkRegionMatches(final String str, final int strStartIndex, final String search) {
-        return str.regionMatches(!sensitive, strStartIndex, search, 0, search.length());
+        return str != null && search != null && str.regionMatches(!sensitive, strStartIndex, search, 0, search.length());
     }
 
     /**
@@ -227,9 +224,9 @@ public enum IOCase {
      * into account.
      * </p>
      *
-     * @param str  the string to check
-     * @param start  the start to compare against
-     * @return true if equal using the case rules, false if either input is null
+     * @param str  the string to check.
+     * @param start  the start to compare against.
+     * @return true if equal using the case rules, false if either input is null.
      */
     public boolean checkStartsWith(final String str, final String start) {
         return str != null && start != null && str.regionMatches(!sensitive, 0, start, 0, start.length());
@@ -247,7 +244,7 @@ public enum IOCase {
     /**
      * Does the object represent case-sensitive comparison.
      *
-     * @return true if case-sensitive
+     * @return true if case-sensitive.
      */
     public boolean isCaseSensitive() {
         return sensitive;
@@ -257,7 +254,7 @@ public enum IOCase {
      * Replaces the enumeration from the stream with a real one.
      * This ensures that the correct flag is set for SYSTEM.
      *
-     * @return the resolved object
+     * @return the resolved object.
      */
     private Object readResolve() {
         return forName(name);
@@ -266,7 +263,7 @@ public enum IOCase {
     /**
      * Gets a string describing the sensitivity.
      *
-     * @return a string describing the sensitivity
+     * @return a string describing the sensitivity.
      */
     @Override
     public String toString() {

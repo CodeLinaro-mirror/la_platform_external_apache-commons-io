@@ -18,6 +18,7 @@
 package org.apache.commons.io;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -36,6 +37,10 @@ public class CharsetsTest {
      * For parameterized tests.
      */
     public static final String AVAIL_CHARSETS = "org.apache.commons.io.CharsetsTest#availableCharsetsKeySet";
+    /**
+     * For parameterized tests.
+     */
+    public static final String REQUIRED_CHARSETS = "org.apache.commons.io.CharsetsTest#getRequiredCharsetNames";
 
     /**
      * For parameterized tests.
@@ -44,6 +49,15 @@ public class CharsetsTest {
      */
     public static Set<String> availableCharsetsKeySet() {
         return Charset.availableCharsets().keySet();
+    }
+
+    /**
+     * For parameterized tests.
+     *
+     * @return {@code Charset.requiredCharsets().keySet()}.
+     */
+    public static Set<String> getRequiredCharsetNames() {
+        return Charsets.requiredCharsets().keySet();
     }
 
     @Test
@@ -74,10 +88,10 @@ public class CharsetsTest {
 
     @Test
     public void testToCharset_String_Charset() {
-        assertEquals(null, Charsets.toCharset((String) null, null));
+        assertNull(Charsets.toCharset((String) null, null));
         assertEquals(Charset.defaultCharset(), Charsets.toCharset((String) null, Charset.defaultCharset()));
         assertEquals(Charset.defaultCharset(), Charsets.toCharset((Charset) null, Charset.defaultCharset()));
-        assertEquals(null, Charsets.toCharset((Charset) null, null));
+        assertNull(Charsets.toCharset((Charset) null, null));
         assertEquals(Charset.defaultCharset(), Charsets.toCharset(Charset.defaultCharset(), Charset.defaultCharset()));
         assertEquals(StandardCharsets.UTF_8, Charsets.toCharset(StandardCharsets.UTF_8, Charset.defaultCharset()));
         assertEquals(StandardCharsets.UTF_8, Charsets.toCharset(StandardCharsets.UTF_8, null));
@@ -85,27 +99,27 @@ public class CharsetsTest {
 
     @Test
     public void testUsAscii() {
-        assertEquals("US-ASCII", Charsets.US_ASCII.name());
+        assertEquals(StandardCharsets.US_ASCII.name(), Charsets.US_ASCII.name());
     }
 
     @Test
     public void testUtf16() {
-        assertEquals("UTF-16", Charsets.UTF_16.name());
+        assertEquals(StandardCharsets.UTF_16.name(), Charsets.UTF_16.name());
     }
 
     @Test
     public void testUtf16Be() {
-        assertEquals("UTF-16BE", Charsets.UTF_16BE.name());
+        assertEquals(StandardCharsets.UTF_16BE.name(), Charsets.UTF_16BE.name());
     }
 
     @Test
     public void testUtf16Le() {
-        assertEquals("UTF-16LE", Charsets.UTF_16LE.name());
+        assertEquals(StandardCharsets.UTF_16LE.name(), Charsets.UTF_16LE.name());
     }
 
     @Test
     public void testUtf8() {
-        assertEquals("UTF-8", Charsets.UTF_8.name());
+        assertEquals(StandardCharsets.UTF_8.name(), Charsets.UTF_8.name());
     }
 
 }

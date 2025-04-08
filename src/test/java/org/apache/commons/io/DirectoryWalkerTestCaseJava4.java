@@ -249,7 +249,6 @@ public class DirectoryWalkerTestCaseJava4 {
 
     private static final IOFileFilter ioFilesFilter = createNameFilter(ioFiles);
 
-
     private static final IOFileFilter outputFilesFilter = createNameFilter(outputFiles);
 
     private static final IOFileFilter ioDirAndFilesFilter = new OrFileFilter(dirsFilter, ioFilesFilter);
@@ -373,8 +372,6 @@ public class DirectoryWalkerTestCaseJava4 {
         assertTrue(results.contains(javaDir), "[B] Start Dir");
         assertTrue(results.contains(orgDir), "[B] Org Dir");
     }
-
-    // ------------ Convenience Test Methods ------------------------------------
 
     /**
      * Test Filtering and limit to depth 3

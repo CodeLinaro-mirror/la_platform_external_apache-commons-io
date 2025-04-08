@@ -20,21 +20,25 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
 import java.nio.charset.Charset;
+import java.nio.charset.CharsetEncoder;
+import java.nio.charset.CoderResult;
+import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
+import java.nio.charset.UnmappableCharacterException;
 import java.util.Random;
-import java.util.Set;
 
-import org.apache.commons.io.Charsets;
 import org.apache.commons.io.CharsetsTest;
 import org.apache.commons.io.IOUtils;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -64,10 +68,6 @@ public class CharSequenceInputStreamTest {
         return available;
     }
 
-    private Set<String> getRequiredCharsetNames() {
-        return Charsets.requiredCharsets().keySet();
-    }
-
     private boolean isAvailabilityTestableForCharset(final String csName) {
         return Charset.forName(csName).canEncode()
                 && !"COMPOUND_TEXT".equalsIgnoreCase(csName) && !"x-COMPOUND_TEXT".equalsIgnoreCase(csName)
@@ -79,6 +79,19 @@ public class CharSequenceInputStreamTest {
                 "ISO-2022-CN".equalsIgnoreCase(csName) ||
                 "ISO-2022-JP".equalsIgnoreCase(csName) ||
                 "Shift_JIS".equalsIgnoreCase(csName);
+    }
+
+    /**
+     * IO-781 available() returns 2 but only 1 byte is read afterwards.
+     */
+    @Test
+    public void testAvailable() throws IOException {
+        final Charset charset = Charset.forName("Big5");
+        final CharSequenceInputStream in = new CharSequenceInputStream("\uD800\uDC00", charset);
+        final int available = in.available();
+        final byte[] data = new byte[available];
+        final int bytesRead = in.read(data);
+        assertEquals(available, bytesRead);
     }
 
     @ParameterizedTest(name = "{0}")
@@ -168,16 +181,26 @@ public class CharSequenceInputStreamTest {
         }
     }
 
-    @Test
-    public void testBufferedRead_RequiredCharset() throws IOException {
-        for (final String csName : getRequiredCharsetNames()) {
-            testBufferedRead(TEST_STRING, csName);
-        }
+    @ParameterizedTest
+    @MethodSource(CharsetsTest.REQUIRED_CHARSETS)
+    public void testBufferedRead_RequiredCharset(final String csName) throws IOException {
+        testBufferedRead(TEST_STRING, csName);
     }
 
     @Test
     public void testBufferedRead_UTF8() throws IOException {
         testBufferedRead(TEST_STRING, UTF_8);
+    }
+
+    @Test
+    public void testCharacterCodingException() throws IOException {
+        final Charset charset = StandardCharsets.US_ASCII;
+        final CharSequenceInputStream in = CharSequenceInputStream.builder()
+            .setCharsetEncoder(charset.newEncoder().onUnmappableCharacter(CodingErrorAction.REPORT))
+            .setCharSequence("\u0080")
+            .get();
+        assertEquals(0, in.available());
+        assertThrows(UnmappableCharacterException.class, in::read);
     }
 
     private void testCharsetMismatchInfiniteLoop(final String csName) throws IOException {
@@ -192,11 +215,10 @@ public class CharSequenceInputStreamTest {
         }
     }
 
-    @Test
-    public void testCharsetMismatchInfiniteLoop_RequiredCharsets() throws IOException {
-        for (final String csName : getRequiredCharsetNames()) {
-            testCharsetMismatchInfiniteLoop(csName);
-        }
+    @ParameterizedTest
+    @MethodSource(CharsetsTest.REQUIRED_CHARSETS)
+    public void testCharsetMismatchInfiniteLoop_RequiredCharsets(final String csName) throws IOException {
+        testCharsetMismatchInfiniteLoop(csName);
     }
 
     // Test is broken if readFirst > 0
@@ -283,11 +305,10 @@ public class CharSequenceInputStreamTest {
         testIO_356_Loop(charset.displayName(), (int) ReaderInputStream.minBufferSize(charset.newEncoder()));
     }
 
-    @Test
-    public void testLargeBufferedRead_RequiredCharsets() throws IOException {
-        for (final String csName : getRequiredCharsetNames()) {
-            testBufferedRead(LARGE_TEST_STRING, csName);
-        }
+    @ParameterizedTest
+    @MethodSource(CharsetsTest.REQUIRED_CHARSETS)
+    public void testLargeBufferedRead_RequiredCharsets(final String csName) throws IOException {
+        testBufferedRead(LARGE_TEST_STRING, csName);
     }
 
     @Test
@@ -295,11 +316,10 @@ public class CharSequenceInputStreamTest {
         testBufferedRead(LARGE_TEST_STRING, UTF_8);
     }
 
-    @Test
-    public void testLargeSingleByteRead_RequiredCharsets() throws IOException {
-        for (final String csName : getRequiredCharsetNames()) {
-            testSingleByteRead(LARGE_TEST_STRING, csName);
-        }
+    @ParameterizedTest
+    @MethodSource(CharsetsTest.REQUIRED_CHARSETS)
+    public void testLargeSingleByteRead_RequiredCharsets(final String csName) throws IOException {
+        testSingleByteRead(LARGE_TEST_STRING, csName);
     }
 
     @Test
@@ -307,7 +327,8 @@ public class CharSequenceInputStreamTest {
         testSingleByteRead(LARGE_TEST_STRING, UTF_8);
     }
 
-    // This test is broken for charsets that don't create a single byte for each char
+    // This test doesn't work for charsets that don't create a single byte for each char.
+    // Use testMarkResetMultiByteChars() instead for those cases.
     private void testMarkReset(final String csName) throws Exception {
         try (InputStream r = new CharSequenceInputStream("test", csName)) {
             assertEquals(2, r.skip(2));
@@ -324,22 +345,61 @@ public class CharSequenceInputStreamTest {
         }
     }
 
-    @Test
-    @Disabled // Test broken for charsets that create multiple bytes for a single char
-    public void testMarkReset_RequiredCharsets() throws Exception {
-        for (final String csName : getRequiredCharsetNames()) {
-            testMarkReset(csName);
-        }
+    @ParameterizedTest
+    @MethodSource(CharsetsTest.REQUIRED_CHARSETS)
+    public void testMarkReset_RequiredCharsets(final String csName) throws Exception {
+        testMarkResetMultiByteChars(csName);
     }
 
     @Test
     public void testMarkReset_USASCII() throws Exception {
-        testMarkReset("US-ASCII");
+        testMarkReset(StandardCharsets.US_ASCII.name());
     }
 
     @Test
     public void testMarkReset_UTF8() throws Exception {
         testMarkReset(UTF_8);
+    }
+
+    private void testMarkResetMultiByteChars(final String csName) throws IOException {
+        // This test quietly skips Charsets that can't handle multibyte characters like ASCII.
+        final String sequenceEnglish = "Test Sequence";
+        final String sequenceCJK = "\u4e01\u4f23\u5045\u5167\u5289\u53ab"; // Kanji text
+        final String[] sequences = {sequenceEnglish, sequenceCJK};
+        for (final String testSequence : sequences) {
+            final CharsetEncoder charsetEncoder = Charset.forName(csName).newEncoder();
+            final ByteBuffer byteBuffer = ByteBuffer.allocate(testSequence.length() * 3);
+            final CharBuffer charBuffer = CharBuffer.wrap(testSequence);
+            final CoderResult result = charsetEncoder.encode(charBuffer, byteBuffer, true);
+            if (result.isUnmappable()) {
+                continue; // Skip character sets that can't handle multibyte characters.
+            }
+            final byte[] expectedBytes = byteBuffer.array();
+
+            final int bLength = byteBuffer.position();
+            final int skip = bLength - 4;
+            try (InputStream r = new CharSequenceInputStream(testSequence, csName)) {
+                assertEquals(skip, r.skip(skip));
+                r.mark(0);
+                assertEquals(expectedBytes[bLength - 4], (byte) r.read(), csName);
+                assertEquals(expectedBytes[bLength - 3], (byte) r.read(), csName);
+                assertEquals(expectedBytes[bLength - 2], (byte) r.read(), csName);
+                assertEquals(expectedBytes[bLength - 1], (byte) r.read(), csName);
+                assertEquals(-1, (byte) r.read(), csName);
+                r.reset();
+                assertEquals(expectedBytes[bLength - 4], (byte) r.read(), csName);
+                assertEquals(expectedBytes[bLength - 3], (byte) r.read(), csName);
+                assertEquals(expectedBytes[bLength - 2], (byte) r.read(), csName);
+                assertEquals(expectedBytes[bLength - 1], (byte) r.read(), csName);
+                assertEquals(-1, (byte) r.read(), csName);
+                r.reset();
+                assertEquals(expectedBytes[bLength - 4], (byte) r.read(), csName);
+                assertEquals(expectedBytes[bLength - 3], (byte) r.read(), csName);
+                assertEquals(expectedBytes[bLength - 2], (byte) r.read(), csName);
+                assertEquals(expectedBytes[bLength - 1], (byte) r.read(), csName);
+                assertEquals(-1, (byte) r.read(), csName);
+            }
+        }
     }
 
     @Test
@@ -392,11 +452,10 @@ public class CharSequenceInputStreamTest {
         }
     }
 
-    @Test
-    public void testReadZero_RequiredCharsets() throws Exception {
-        for (final String csName : getRequiredCharsetNames()) {
-            testReadZero(csName);
-        }
+    @ParameterizedTest
+    @MethodSource(CharsetsTest.REQUIRED_CHARSETS)
+    public void testReadZero_RequiredCharsets(final String csName) throws Exception {
+        testReadZero(csName);
     }
 
     private void testResetBeforeEnd(final CharSequenceInputStream inputStream) throws IOException {
@@ -419,7 +478,6 @@ public class CharSequenceInputStreamTest {
     }
 
     @Test
-    @Disabled("[IO-795] CharSequenceInputStream.reset() only works once")
     public void testResetBeforeEndSetCharSequence() throws IOException {
         try (final CharSequenceInputStream inputStream = CharSequenceInputStream.builder().setCharSequence("1234").get()) {
             testResetBeforeEnd(inputStream);
@@ -454,11 +512,10 @@ public class CharSequenceInputStreamTest {
         }
     }
 
-    @Test
-    public void testSingleByteRead_RequiredCharsets() throws IOException {
-        for (final String csName : getRequiredCharsetNames()) {
-            testSingleByteRead(TEST_STRING, csName);
-        }
+    @ParameterizedTest
+    @MethodSource(CharsetsTest.REQUIRED_CHARSETS)
+    public void testSingleByteRead_RequiredCharsets(final String csName) throws IOException {
+        testSingleByteRead(TEST_STRING, csName);
     }
 
     @Test
@@ -471,32 +528,14 @@ public class CharSequenceInputStreamTest {
         testSingleByteRead(TEST_STRING, UTF_8);
     }
 
-    // This is broken for charsets that don't map each char to a byte
-    private void testSkip(final String csName) throws Exception {
+    @ParameterizedTest
+    @MethodSource(CharsetsTest.REQUIRED_CHARSETS)
+    public void testSkip_RequiredCharsets(final String csName) throws Exception {
         try (InputStream r = new CharSequenceInputStream("test", csName)) {
             assertEquals(1, r.skip(1));
             assertEquals(2, r.skip(2));
-            assertEquals('t', r.read(), csName);
             r.skip(100);
             assertEquals(-1, r.read(), csName);
         }
-    }
-
-    @Test
-    @Disabled // test is broken for charsets that generate multiple bytes per char.
-    public void testSkip_RequiredCharsets() throws Exception {
-        for (final String csName : getRequiredCharsetNames()) {
-            testSkip(csName);
-        }
-    }
-
-    @Test
-    public void testSkip_USASCII() throws Exception {
-        testSkip("US-ASCII");
-    }
-
-    @Test
-    public void testSkip_UTF8() throws Exception {
-        testSkip(UTF_8);
     }
 }

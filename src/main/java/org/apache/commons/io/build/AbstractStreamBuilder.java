@@ -20,6 +20,7 @@ package org.apache.commons.io.build;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.Reader;
 import java.io.Writer;
 import java.nio.charset.Charset;
 import java.nio.file.OpenOption;
@@ -112,9 +113,9 @@ public abstract class AbstractStreamBuilder<T, B extends AbstractStreamBuilder<T
      * Gets a CharSequence from the origin with a Charset.
      *
      * @return An input stream
-     * @throws IOException                   if an I/O error occurs.
-     * @throws UnsupportedOperationException if the origin cannot be converted to a CharSequence.
      * @throws IllegalStateException         if the {@code origin} is {@code null}.
+     * @throws UnsupportedOperationException if the origin cannot be converted to a CharSequence.
+     * @throws IOException                   if an I/O error occurs.
      * @see AbstractOrigin#getCharSequence(Charset)
      * @since 2.13.0
      */
@@ -141,13 +142,14 @@ public abstract class AbstractStreamBuilder<T, B extends AbstractStreamBuilder<T
     }
 
     /**
-     * Gets an input stream from the origin with open options.
+     * Gets an InputStream from the origin with OpenOption[].
      *
      * @return An input stream
+     * @throws IllegalStateException         if the {@code origin} is {@code null}.
+     * @throws UnsupportedOperationException if the origin cannot be converted to an {@link InputStream}.
      * @throws IOException                   if an I/O error occurs.
-     * @throws UnsupportedOperationException if the origin cannot be converted to an InputStream.
      * @see AbstractOrigin#getInputStream(OpenOption...)
-     * @throws IllegalStateException if the {@code origin} is {@code null}.
+     * @see #getOpenOptions()
      * @since 2.13.0
      */
     protected InputStream getInputStream() throws IOException {
@@ -155,22 +157,23 @@ public abstract class AbstractStreamBuilder<T, B extends AbstractStreamBuilder<T
     }
 
     /**
-     * Gets the OpenOption.
+     * Gets the OpenOption array.
      *
-     * @return the OpenOption.
+     * @return the OpenOption array.
      */
     protected OpenOption[] getOpenOptions() {
         return openOptions;
     }
 
     /**
-     * Gets an OutputStream from the origin with open options.
+     * Gets an OutputStream from the origin with OpenOption[].
      *
      * @return An OutputStream
-     * @throws IOException                   if an I/O error occurs.
-     * @throws UnsupportedOperationException if the origin cannot be converted to an OutputStream.
      * @throws IllegalStateException         if the {@code origin} is {@code null}.
+     * @throws UnsupportedOperationException if the origin cannot be converted to an {@link OutputStream}.
+     * @throws IOException                   if an I/O error occurs.
      * @see AbstractOrigin#getOutputStream(OpenOption...)
+     * @see #getOpenOptions()
      * @since 2.13.0
      */
     protected OutputStream getOutputStream() throws IOException {
@@ -181,8 +184,8 @@ public abstract class AbstractStreamBuilder<T, B extends AbstractStreamBuilder<T
      * Gets a Path from the origin.
      *
      * @return A Path
-     * @throws UnsupportedOperationException if the origin cannot be converted to a Path.
      * @throws IllegalStateException         if the {@code origin} is {@code null}.
+     * @throws UnsupportedOperationException if the origin cannot be converted to a {@link Path}.
      * @see AbstractOrigin#getPath()
      * @since 2.13.0
      */
@@ -191,13 +194,29 @@ public abstract class AbstractStreamBuilder<T, B extends AbstractStreamBuilder<T
     }
 
     /**
-     * Gets an writer from the origin with open options.
+     * Gets a Reader from the origin with a Charset.
+     *
+     * @return A Reader
+     * @throws IllegalStateException         if the {@code origin} is {@code null}.
+     * @throws UnsupportedOperationException if the origin cannot be converted to a {@link Reader}.
+     * @throws IOException                   if an I/O error occurs.
+     * @see AbstractOrigin#getReader(Charset)
+     * @see #getCharset()
+     * @since 2.16.0
+     */
+    protected Reader getReader() throws IOException {
+        return checkOrigin().getReader(getCharset());
+    }
+
+    /**
+     * Gets a Writer from the origin with an OpenOption[].
      *
      * @return An writer.
-     * @throws IOException                   if an I/O error occurs.
-     * @throws UnsupportedOperationException if the origin cannot be converted to a Writer.
      * @throws IllegalStateException         if the {@code origin} is {@code null}.
+     * @throws UnsupportedOperationException if the origin cannot be converted to a {@link Writer}.
+     * @throws IOException                   if an I/O error occurs.
      * @see AbstractOrigin#getOutputStream(OpenOption...)
+     * @see #getOpenOptions()
      * @since 2.13.0
      */
     protected Writer getWriter() throws IOException {

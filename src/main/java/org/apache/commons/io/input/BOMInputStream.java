@@ -46,7 +46,7 @@ import org.apache.commons.io.build.AbstractStreamBuilder;
  * <li>UTF-32LE - {@link ByteOrderMark#UTF_32BE}</li>
  * </ul>
  * <p>
- * To build an instance, see {@link Builder}.
+ * To build an instance, use {@link Builder}.
  * </p>
  * <h2>Example 1 - Detecting and excluding a UTF-8 BOM</h2>
  *
@@ -89,15 +89,20 @@ import org.apache.commons.io.build.AbstractStreamBuilder;
  *     // has a UTF-32BE BOM
  * }
  * </pre>
+ * <p>
+ * To build an instance, use {@link Builder}.
+ * </p>
  *
+ * @see Builder
  * @see org.apache.commons.io.ByteOrderMark
- * @see <a href="http://en.wikipedia.org/wiki/Byte_order_mark">Wikipedia - Byte Order Mark</a>
+ * @see <a href="https://en.wikipedia.org/wiki/Byte_order_mark">Wikipedia - Byte Order Mark</a>
  * @since 2.0
  */
 public class BOMInputStream extends ProxyInputStream {
 
+    // @formatter:off
     /**
-     * Builds a new {@link BOMInputStream} instance.
+     * Builds a new {@link BOMInputStream}.
      *
      * <h2>Using NIO</h2>
      * <pre>{@code
@@ -116,8 +121,10 @@ public class BOMInputStream extends ProxyInputStream {
      *   .get();}
      * </pre>
      *
+     * @see #get()
      * @since 2.12.0
      */
+    // @formatter:on
     public static class Builder extends AbstractStreamBuilder<BOMInputStream, Builder> {
 
         private static final ByteOrderMark[] DEFAULT = { ByteOrderMark.UTF_8 };
@@ -136,17 +143,26 @@ public class BOMInputStream extends ProxyInputStream {
         private boolean include;
 
         /**
-         * Constructs a new instance.
+         * Builds a new {@link BOMInputStream}.
          * <p>
-         * This builder use the aspects InputStream, OpenOption[], include, and ByteOrderMark[].
+         * You must set input that supports {@link #getInputStream()}, otherwise, this method throws an exception.
          * </p>
          * <p>
-         * You must provide an origin that can be converted to an InputStream by this builder, otherwise, this call will throw an
-         * {@link UnsupportedOperationException}.
+         * This builder use the following aspects: InputStream, OpenOption[], include, and ByteOrderMark[].
          * </p>
+         * <p>
+         * This builder use the following aspects:
+         * </p>
+         * <ul>
+         * <li>{@link #getInputStream()}</li>
+         * <li>include}</li>
+         * <li>byteOrderMarks</li>
+         * </ul>
          *
          * @return a new instance.
-         * @throws UnsupportedOperationException if the origin cannot provide an InputStream.
+         * @throws IllegalStateException         if the {@code origin} is {@code null}.
+         * @throws UnsupportedOperationException if the origin cannot be converted to an {@link InputStream}.
+         * @throws IOException                   if an I/O error occurs.
          * @see #getInputStream()
          */
         @SuppressWarnings("resource")
@@ -189,7 +205,6 @@ public class BOMInputStream extends ProxyInputStream {
      * Compares ByteOrderMark objects in descending length order.
      */
     private static final Comparator<ByteOrderMark> ByteOrderMarkLengthComparator = Comparator.comparing(ByteOrderMark::length).reversed();
-
 
     /**
      * Constructs a new {@link Builder}.
@@ -262,7 +277,6 @@ public class BOMInputStream extends ProxyInputStream {
         // Sort the BOMs to match the longest BOM first because some BOMs have the same starting two bytes.
         list.sort(ByteOrderMarkLengthComparator);
         this.boms = list;
-
     }
 
     /**
@@ -328,7 +342,6 @@ public class BOMInputStream extends ProxyInputStream {
      * @return The BOM charset Name or null if no BOM found
      * @throws IOException
      *             if an error reading the first bytes of the stream occurs
-     *
      */
     public String getBOMCharsetName() throws IOException {
         getBOM();
@@ -367,14 +380,14 @@ public class BOMInputStream extends ProxyInputStream {
     /**
      * Invokes the delegate's {@code mark(int)} method.
      *
-     * @param readlimit
+     * @param readLimit
      *            read ahead limit
      */
     @Override
-    public synchronized void mark(final int readlimit) {
+    public synchronized void mark(final int readLimit) {
         markFbIndex = fbIndex;
         markedAtStart = firstBytes == null;
-        in.mark(readlimit);
+        in.mark(readLimit);
     }
 
     /**

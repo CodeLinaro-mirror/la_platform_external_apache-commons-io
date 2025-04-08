@@ -36,8 +36,7 @@ import org.junit.jupiter.api.Test;
 public class FileAlterationObserverTest extends AbstractMonitorTest {
 
     /**
-     * Construct a new test case.
-     *
+     * Constructs a new instance.
      */
     public FileAlterationObserverTest() {
         listener = new CollectionFileListener(true);
@@ -77,6 +76,7 @@ public class FileAlterationObserverTest extends AbstractMonitorTest {
 
     /**
      * Test checkAndNotify() method
+     *
      * @throws Exception
      */
     @Test
@@ -136,6 +136,7 @@ public class FileAlterationObserverTest extends AbstractMonitorTest {
 
     /**
      * Test checkAndNotify() creating
+     *
      * @throws IOException if an I/O error occurs.
      */
     @Test
@@ -144,13 +145,13 @@ public class FileAlterationObserverTest extends AbstractMonitorTest {
         checkCollectionsEmpty("A");
         File testDirA = new File(testDir, "test-dir-A");
         testDirA.mkdir();
-        testDir  = touch(testDir);
+        testDir = touch(testDir);
         testDirA = touch(testDirA);
-        File testDirAFile1 =       new File(testDirA, "A-file1.java");
+        File testDirAFile1 = new File(testDirA, "A-file1.java");
         final File testDirAFile2 = touch(new File(testDirA, "A-file2.java"));
-        File testDirAFile3 =       new File(testDirA, "A-file3.java");
+        File testDirAFile3 = new File(testDirA, "A-file3.java");
         final File testDirAFile4 = touch(new File(testDirA, "A-file4.java"));
-        File testDirAFile5 =       new File(testDirA, "A-file5.java");
+        File testDirAFile5 = new File(testDirA, "A-file5.java");
 
         checkAndNotify();
         checkCollectionSizes("B", 1, 0, 0, 2, 0, 0);
@@ -171,7 +172,7 @@ public class FileAlterationObserverTest extends AbstractMonitorTest {
 
         // Create file with name < first entry
         testDirAFile1 = touch(testDirAFile1);
-        testDirA      = touch(testDirA);
+        testDirA = touch(testDirA);
         checkAndNotify();
         checkCollectionSizes("D", 0, 1, 0, 1, 0, 0);
         assertTrue(testDirAFile1.exists(), "D testDirAFile1 exists");
@@ -179,7 +180,7 @@ public class FileAlterationObserverTest extends AbstractMonitorTest {
 
         // Create file with name between 2 entries
         testDirAFile3 = touch(testDirAFile3);
-        testDirA      = touch(testDirA);
+        testDirA = touch(testDirA);
         checkAndNotify();
         checkCollectionSizes("E", 0, 1, 0, 1, 0, 0);
         assertTrue(testDirAFile3.exists(), "E testDirAFile3 exists");
@@ -187,7 +188,7 @@ public class FileAlterationObserverTest extends AbstractMonitorTest {
 
         // Create file with name > last entry
         testDirAFile5 = touch(testDirAFile5);
-        testDirA      = touch(testDirA);
+        testDirA = touch(testDirA);
         checkAndNotify();
         checkCollectionSizes("F", 0, 1, 0, 1, 0, 0);
         assertTrue(testDirAFile5.exists(), "F testDirAFile5 exists");
@@ -196,6 +197,7 @@ public class FileAlterationObserverTest extends AbstractMonitorTest {
 
     /**
      * Test checkAndNotify() deleting
+     *
      * @throws IOException if an I/O error occurs.
      */
     @Test
@@ -204,7 +206,7 @@ public class FileAlterationObserverTest extends AbstractMonitorTest {
         checkCollectionsEmpty("A");
         File testDirA = new File(testDir, "test-dir-A");
         testDirA.mkdir();
-        testDir  = touch(testDir);
+        testDir = touch(testDir);
         testDirA = touch(testDirA);
         final File testDirAFile1 = touch(new File(testDirA, "A-file1.java"));
         final File testDirAFile2 = touch(new File(testDirA, "A-file2.java"));
@@ -256,6 +258,7 @@ public class FileAlterationObserverTest extends AbstractMonitorTest {
 
     /**
      * Test checkAndNotify() creating
+     *
      * @throws IOException if an I/O error occurs.
      */
     @Test
@@ -264,7 +267,7 @@ public class FileAlterationObserverTest extends AbstractMonitorTest {
         checkCollectionsEmpty("A");
         File testDirA = new File(testDir, "test-dir-A");
         testDirA.mkdir();
-        testDir  = touch(testDir);
+        testDir = touch(testDir);
         testDirA = touch(testDirA);
         File testDirAFile1 = touch(new File(testDirA, "A-file1.java"));
         final File testDirAFile2 = touch(new File(testDirA, "A-file2.java"));
@@ -291,21 +294,21 @@ public class FileAlterationObserverTest extends AbstractMonitorTest {
 
         // Update first entry
         testDirAFile1 = touch(testDirAFile1);
-        testDirA      = touch(testDirA);
+        testDirA = touch(testDirA);
         checkAndNotify();
         checkCollectionSizes("D", 0, 1, 0, 0, 1, 0);
         assertTrue(listener.getChangedFiles().contains(testDirAFile1), "D testDirAFile1");
 
         // Update file with name between 2 entries
         testDirAFile3 = touch(testDirAFile3);
-        testDirA      = touch(testDirA);
+        testDirA = touch(testDirA);
         checkAndNotify();
         checkCollectionSizes("E", 0, 1, 0, 0, 1, 0);
         assertTrue(listener.getChangedFiles().contains(testDirAFile3), "E testDirAFile3");
 
         // Update last entry
         testDirAFile5 = touch(testDirAFile5);
-        testDirA      = touch(testDirA);
+        testDirA = touch(testDirA);
         checkAndNotify();
         checkCollectionSizes("F", 0, 1, 0, 0, 1, 0);
         assertTrue(listener.getChangedFiles().contains(testDirAFile5), "F testDirAFile5");
@@ -313,6 +316,7 @@ public class FileAlterationObserverTest extends AbstractMonitorTest {
 
     /**
      * Test checkAndNotify() method
+     *
      * @throws IOException if an I/O error occurs.
      */
     @Test
@@ -329,7 +333,7 @@ public class FileAlterationObserverTest extends AbstractMonitorTest {
 
         // Create
         testDirAFile1 = touch(testDirAFile1);
-        File testDirAFile2 = touch(new File(testDirA, "A-file2.txt"));  /* filter should ignore */
+        File testDirAFile2 = touch(new File(testDirA, "A-file2.txt")); /* filter should ignore */
         File testDirAFile3 = touch(new File(testDirA, "A-file3.java")); /* filter should ignore */
         assertTrue(testDirAFile1.exists(), "B testDirAFile1 exists");
         assertTrue(testDirAFile2.exists(), "B testDirAFile2 exists");
@@ -372,13 +376,11 @@ public class FileAlterationObserverTest extends AbstractMonitorTest {
         final File file = new File("/foo");
 
         FileAlterationObserver observer = new FileAlterationObserver(file);
-        assertEquals("FileAlterationObserver[file='" + file.getPath() +  "', listeners=0]",
-                observer.toString());
+        assertEquals("FileAlterationObserver[file='" + file.getPath() + "', true, listeners=0]", observer.toString());
 
         observer = new FileAlterationObserver(file, CanReadFileFilter.CAN_READ);
-        assertEquals("FileAlterationObserver[file='" + file.getPath() +  "', CanReadFileFilter, listeners=0]",
-                observer.toString());
+        assertEquals("FileAlterationObserver[file='" + file.getPath() + "', CanReadFileFilter, listeners=0]", observer.toString());
 
         assertEquals(file, observer.getDirectory());
-  }
+    }
 }

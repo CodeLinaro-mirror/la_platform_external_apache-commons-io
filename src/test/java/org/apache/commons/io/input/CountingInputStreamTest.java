@@ -62,7 +62,6 @@ public class CountingInputStreamTest {
         }
     }
 
-
     @Test
     public void testEOF1() throws Exception {
         final ByteArrayInputStream bais = new ByteArrayInputStream(new byte[2]);
@@ -154,7 +153,7 @@ public class CountingInputStreamTest {
             assertEquals(6, cis.skip(6));
             assertEquals(6, cis.getCount());
             final byte[] result = new byte[6];
-            cis.read(result);
+            assertEquals(result.length, cis.read(result));
 
             assertEquals("World!", new String(result));
             assertEquals(12, cis.getCount());

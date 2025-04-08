@@ -37,17 +37,24 @@ import org.apache.commons.io.charset.CharsetEncoders;
 import org.apache.commons.io.function.Uncheck;
 
 /**
- * Implements an {@link InputStream} to read from String, StringBuffer, StringBuilder or CharBuffer.
+ * Implements an {@link InputStream} to read bytes from String, StringBuffer, StringBuilder or CharBuffer,
+ * encoded using the specified Charset. The Charset defaults to Charset.defaultCharset().
  * <p>
  * <strong>Note:</strong> Supports {@link #mark(int)} and {@link #reset()}.
  * </p>
+ * <p>
+ * To build an instance, use {@link Builder}.
+ * </p>
  *
+ * @see Builder
  * @since 2.2
  */
 public class CharSequenceInputStream extends InputStream {
 
+    //@formatter:off
     /**
-     * Builds a new {@link CharSequenceInputStream} instance.
+     * Builds a new {@link CharSequenceInputStream}.
+     *
      * <p>
      * For example:
      * </p>
@@ -70,17 +77,27 @@ public class CharSequenceInputStream extends InputStream {
      *   .get();}
      * </pre>
      *
+     * @see #get()
      * @since 2.13.0
      */
+    //@formatter:on
     public static class Builder extends AbstractStreamBuilder<CharSequenceInputStream, Builder> {
 
         private CharsetEncoder charsetEncoder = newEncoder(getCharset());
 
         /**
-         * Constructs a new instance.
+         * Builds a new {@link CharSequenceInputStream}.
          * <p>
-         * This builder use the aspects the CharSequence, buffer size, and Charset.
+         * You must set input that supports {@link #getCharSequence()}, otherwise, this method throws an exception.
          * </p>
+         * <p>
+         * This builder use the following aspects:
+         * </p>
+         * <ul>
+         * <li>{@link #getCharSequence()}</li>
+         * <li>{@link #getBufferSize()}</li>
+         * <li>{@link CharsetEncoder}</li>
+         * </ul>
          *
          * @return a new instance.
          * @throws IllegalArgumentException if the buffer is not large enough to hold a complete character.
@@ -179,6 +196,15 @@ public class CharSequenceInputStream extends InputStream {
         this.cBuf = CharBuffer.wrap(cs);
         this.cBufMark = NO_MARK;
         this.bBufMark = NO_MARK;
+        try {
+            fillBuffer();
+        } catch (final CharacterCodingException ex) {
+            // Reset everything without filling the buffer
+            // so the same exception can be thrown again later.
+            this.bBuf.clear();
+            this.bBuf.flip();
+            this.cBuf.rewind();
+        }
     }
 
     /**
@@ -209,18 +235,14 @@ public class CharSequenceInputStream extends InputStream {
     }
 
     /**
-     * Return an estimate of the number of bytes remaining in the byte stream.
-     * @return the count of bytes that can be read without blocking (or returning EOF).
+     * Gets a lower bound on the number of bytes remaining in the byte stream.
      *
+     * @return the count of bytes that can be read without blocking (or returning EOF).
      * @throws IOException if an error occurs (probably not possible).
      */
     @Override
     public int available() throws IOException {
-        // The cached entries are in bBuf; since encoding always creates at least one byte
-        // per character, we can add the two to get a better estimate (e.g. if bBuf is empty)
-        // Note that the implementation in 2.4 could return zero even though there were
-        // encoded bytes still available.
-        return this.bBuf.remaining() + this.cBuf.remaining();
+        return this.bBuf.remaining();
     }
 
     @Override
@@ -254,10 +276,10 @@ public class CharSequenceInputStream extends InputStream {
 
     /**
      * {@inheritDoc}
-     * @param readlimit max read limit (ignored).
+     * @param readLimit max read limit (ignored).
      */
     @Override
-    public synchronized void mark(final int readlimit) {
+    public synchronized void mark(final int readLimit) {
         this.cBufMark = this.cBuf.position();
         this.bBufMark = this.bBuf.position();
         this.cBuf.mark();
@@ -353,6 +375,7 @@ public class CharSequenceInputStream extends InputStream {
             this.cBufMark = NO_MARK;
             this.bBufMark = NO_MARK;
         }
+        mark(0);
     }
 
     @Override

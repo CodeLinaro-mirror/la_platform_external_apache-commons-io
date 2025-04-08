@@ -40,12 +40,12 @@ public final class FileTimes {
     public static final FileTime EPOCH = FileTime.from(Instant.EPOCH);
 
     /**
-     * The offset of Windows time 0 to Unix epoch in 100-nanosecond intervals.
+     * The offset of Windows time 0 to UNIX epoch in 100-nanosecond intervals.
      *
      * <a href="https://msdn.microsoft.com/en-us/library/windows/desktop/ms724290%28v=vs.85%29.aspx">Windows File Times</a>
      * <p>
      * A file time is a 64-bit value that represents the number of 100-nanosecond intervals that have elapsed since 12:00
-     * A.M. January 1, 1601 Coordinated Universal Time (UTC). This is the offset of Windows time 0 to Unix epoch in
+     * A.M. January 1, 1601 Coordinated Universal Time (UTC). This is the offset of Windows time 0 to UNIX epoch in
      * 100-nanosecond intervals.
      * </p>
      */
@@ -60,6 +60,43 @@ public final class FileTimes {
      * The amount of 100-nanosecond intervals in one millisecond.
      */
     static final long HUNDRED_NANOS_PER_MILLISECOND = TimeUnit.MILLISECONDS.toNanos(1) / 100;
+
+    /**
+     * Converts standard UNIX time (in seconds, UTC/GMT) to {@link FileTime}.
+     *
+     * @param time UNIX timestamp (seconds).
+     * @return the corresponding FileTime.
+     * @since 2.16.0
+     */
+    public static FileTime fromUnixTime(final long time) {
+        return FileTime.from(time, TimeUnit.SECONDS);
+    }
+
+    /**
+     * Tests whether a FileTime can be safely represented in the standard UNIX time.
+     * <p>
+     * If the FileTime is null, this method returns true.
+     * </p>
+     *
+     * @param time the FileTime to evaluate, can be null.
+     * @return true if the time exceeds the minimum or maximum UNIX time, false otherwise.
+     * @since 2.16.0
+     */
+    public static boolean isUnixTime(final FileTime time) {
+        return isUnixTime(toUnixTime(time));
+    }
+
+    /**
+     * Tests whether a given number of seconds (since Epoch) can be safely represented in the standard UNIX time.
+     *
+     * @param seconds the number of seconds (since Epoch) to evaluate.
+     * @return true if the time can be represented in the standard UNIX time, false otherwise.
+     * @since 2.16.0
+     */
+    public static boolean isUnixTime(final long seconds) {
+        return Integer.MIN_VALUE <= seconds && seconds <= Integer.MAX_VALUE;
+    }
+
 
     /**
      * Subtracts milliseconds from a source FileTime.
@@ -218,6 +255,33 @@ public final class FileTimes {
         final Instant instant = fileTime.toInstant();
         final long javaHundredNanos = instant.getEpochSecond() * HUNDRED_NANOS_PER_SECOND + instant.getNano() / 100;
         return Math.subtractExact(javaHundredNanos, WINDOWS_EPOCH_OFFSET);
+    }
+
+    /**
+     * Converts Java time (milliseconds since Epoch) to NTFS time.
+     *
+     * @param javaTime the Java time
+     * @return the NTFS time
+     * @since 2.16.0
+     */
+    public static long toNtfsTime(final long javaTime) {
+        final long javaHundredNanos = javaTime * HUNDRED_NANOS_PER_MILLISECOND;
+        return Math.subtractExact(javaHundredNanos, WINDOWS_EPOCH_OFFSET);
+    }
+
+    /**
+     * Converts {@link FileTime} to standard UNIX time in seconds.
+     * <p>
+     * The returned seconds value may lie out of bounds of UNIX time. Check with {@link FileTimes#isUnixTime(long)}.
+     * </p>
+     *
+     * @param fileTime the original FileTime.
+     * @return the UNIX timestamp or 0 if the input is null.
+     * @see #isUnixTime(long)
+     * @since 2.16.0
+     */
+    public static long toUnixTime(final FileTime fileTime) {
+        return fileTime != null ? fileTime.to(TimeUnit.SECONDS) : 0;
     }
 
     private FileTimes() {

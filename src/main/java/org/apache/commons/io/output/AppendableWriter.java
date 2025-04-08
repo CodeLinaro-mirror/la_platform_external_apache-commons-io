@@ -24,8 +24,8 @@ import java.util.Objects;
  * Writer implementation that writes the data to an {@link Appendable}
  * Object.
  * <p>
- * For example, can be used with a {@link java.lang.StringBuilder}
- * or {@link java.lang.StringBuffer}.
+ * For example, can be used with a {@link StringBuilder}
+ * or {@link StringBuffer}.
  * </p>
  *
  * @since 2.7
@@ -108,7 +108,7 @@ public class AppendableWriter <T extends Appendable> extends Writer {
     }
 
     /**
-     * Return the target appendable.
+     * Gets the target appendable.
      *
      * @return the target appendable
      */
@@ -144,7 +144,7 @@ public class AppendableWriter <T extends Appendable> extends Writer {
      */
     @Override
     public void write(final int c) throws IOException {
-        appendable.append((char)c);
+        appendable.append((char) c);
     }
 
     /**

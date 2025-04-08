@@ -38,18 +38,21 @@ import org.apache.commons.io.build.AbstractStreamBuilder;
  * read() call is issued. The read ahead buffer is used to asynchronously read from the underlying input stream. When the current active buffer is exhausted, we
  * flip the two buffers so that we can start reading from the read ahead buffer without being blocked by disk I/O.
  * <p>
- * To build an instance, see {@link Builder}.
+ * To build an instance, use {@link Builder}.
  * </p>
  * <p>
  * This class was ported and adapted from Apache Spark commit 933dc6cb7b3de1d8ccaf73d124d6eb95b947ed19.
  * </p>
  *
+ * @see Builder
  * @since 2.9.0
  */
 public class ReadAheadInputStream extends FilterInputStream {
 
+    // @formatter:off
     /**
-     * Builds a new {@link ReadAheadInputStream} instance.
+     * Builds a new {@link ReadAheadInputStream}.
+     *
      * <p>
      * For example:
      * </p>
@@ -60,25 +63,34 @@ public class ReadAheadInputStream extends FilterInputStream {
      *   .get();}
      * </pre>
      *
+     * @see #get()
      * @since 2.12.0
      */
+    // @formatter:on
     public static class Builder extends AbstractStreamBuilder<ReadAheadInputStream, Builder> {
 
         private ExecutorService executorService;
 
         /**
-         * Constructs a new instance.
+         * Builds a new {@link ReadAheadInputStream}.
          * <p>
-         * This builder use the aspects InputStream, OpenOption[], buffer size, ExecutorService.
+         * You must set input that supports {@link #getInputStream()}, otherwise, this method throws an exception.
          * </p>
          * <p>
-         * You must provide an origin that can be converted to an InputStream by this builder, otherwise, this call will throw an
-         * {@link UnsupportedOperationException}.
+         * This builder use the following aspects:
          * </p>
+         * <ul>
+         * <li>{@link #getInputStream()}</li>
+         * <li>{@link #getBufferSize()}</li>
+         * <li>{@link ExecutorService}</li>
+         * </ul>
          *
          * @return a new instance.
-         * @throws UnsupportedOperationException if the origin cannot provide an InputStream.
+         * @throws IllegalStateException         if the {@code origin} is {@code null}.
+         * @throws UnsupportedOperationException if the origin cannot be converted to an {@link InputStream}.
+         * @throws IOException                   if an I/O error occurs.
          * @see #getInputStream()
+         * @see #getBufferSize()
          */
         @SuppressWarnings("resource")
         @Override
@@ -169,7 +181,7 @@ public class ReadAheadInputStream extends FilterInputStream {
     private boolean isReading;
 
     // Whether there is a reader waiting for data.
-    private final AtomicBoolean isWaiting = new AtomicBoolean(false);
+    private final AtomicBoolean isWaiting = new AtomicBoolean();
 
     private final ExecutorService executorService;
 

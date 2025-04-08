@@ -28,6 +28,7 @@ import java.util.stream.Stream;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOCase;
 import org.apache.commons.io.build.AbstractSupplier;
+import org.apache.commons.io.file.PathUtils;
 
 /**
  * Filters files using the supplied wildcards.
@@ -39,7 +40,7 @@ import org.apache.commons.io.build.AbstractSupplier;
  * command lines. The check is case-sensitive by default. See {@link FilenameUtils#wildcardMatchOnSystem(String,String)} for more information.
  * </p>
  * <p>
- * To build an instance, see {@link Builder}.
+ * To build an instance, use {@link Builder}.
  * </p>
  * <p>
  * For example:
@@ -274,14 +275,14 @@ public class WildcardFileFilter extends AbstractFileFilter implements Serializab
     /**
      * Checks to see if the file name matches one of the wildcards.
      *
-     * @param file the file to check
+     * @param path the file to check
      *
      * @return true if the file name matches one of the wildcards.
      * @since 2.9.0
      */
     @Override
-    public FileVisitResult accept(final Path file, final BasicFileAttributes attributes) {
-        return toFileVisitResult(accept(Objects.toString(file.getFileName(), null)));
+    public FileVisitResult accept(final Path path, final BasicFileAttributes attributes) {
+        return toFileVisitResult(accept(PathUtils.getFileNameString(path)));
     }
 
     private boolean accept(final String name) {

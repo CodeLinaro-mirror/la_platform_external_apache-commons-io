@@ -25,17 +25,22 @@ import java.io.InputStream;
 import org.apache.commons.io.IOUtils;
 
 /**
- * A Proxy stream which acts as expected, that is it passes the method
- * calls on to the proxied stream and doesn't change which methods are
- * being called.
+ * A proxy stream which acts as a {@link FilterInputStream}, by passing all method calls on to the proxied stream, not changing which methods are called.
  * <p>
- * It is an alternative base class to FilterInputStream
- * to increase reusability, because FilterInputStream changes the
- * methods being called, such as read(byte[]) to read(byte[], int, int).
+ * It is an alternative base class to {@link FilterInputStream} to increase reusability, because {@link FilterInputStream} changes the methods being called,
+ * such as read(byte[]) to read(byte[], int, int).
  * </p>
  * <p>
- * See the protected methods for ways in which a subclass can easily decorate
- * a stream with custom pre-, post- or error processing functionality.
+ * In addition, this class allows you to:
+ * </p>
+ * <ul>
+ * <li>notify a subclass that <em>n</em> bytes are about to be read through {@link #beforeRead(int)}</li>
+ * <li>notify a subclass that <em>n</em> bytes were read through {@link #afterRead(int)}</li>
+ * <li>notify a subclass that an exception was caught through {@link #handleIOException(IOException)}</li>
+ * <li>{@link #unwrap()} itself</li>
+ * </ul>
+ * <p>
+ * This class does not add any state (no additional instance variables).
  * </p>
  */
 public abstract class ProxyInputStream extends FilterInputStream {
@@ -51,7 +56,7 @@ public abstract class ProxyInputStream extends FilterInputStream {
     }
 
     /**
-     * Invoked by the read methods after the proxied call has returned
+     * Invoked by the {@code read} methods after the proxied call has returned
      * successfully. The number of bytes returned to the caller (or -1 if
      * the end of stream was reached) is given as an argument.
      * <p>
@@ -64,17 +69,19 @@ public abstract class ProxyInputStream extends FilterInputStream {
      * {@link #reset()}. You need to explicitly override those methods if
      * you want to add post-processing steps also to them.
      * </p>
+     *
      * @since 2.0
-     * @param n number of bytes read, or -1 if the end of stream was reached
-     * @throws IOException if the post-processing fails
+     * @param n number of bytes read, or -1 if the end of stream was reached.
+     * @throws IOException if the post-processing fails in a subclass.
      */
     @SuppressWarnings("unused") // Possibly thrown from subclasses.
     protected void afterRead(final int n) throws IOException {
-        // no-op
+        // no-op default
     }
 
     /**
      * Invokes the delegate's {@code available()} method.
+     *
      * @return the number of available bytes
      * @throws IOException if an I/O error occurs.
      */
@@ -89,7 +96,7 @@ public abstract class ProxyInputStream extends FilterInputStream {
     }
 
     /**
-     * Invoked by the read methods before the call is proxied. The number
+     * Invoked by the {@code read} methods before the call is proxied. The number
      * of bytes that the caller wanted to read (1 for the {@link #read()}
      * method, buffer length for {@link #read(byte[])}, etc.) is given as
      * an argument.
@@ -103,17 +110,19 @@ public abstract class ProxyInputStream extends FilterInputStream {
      * {@link #reset()}. You need to explicitly override those methods if
      * you want to add pre-processing steps also to them.
      * </p>
+     *
      * @since 2.0
-     * @param n number of bytes that the caller asked to be read
-     * @throws IOException if the pre-processing fails
+     * @param n number of bytes that the caller asked to be read.
+     * @throws IOException if the pre-processing fails in a subclass.
      */
     @SuppressWarnings("unused") // Possibly thrown from subclasses.
     protected void beforeRead(final int n) throws IOException {
-        // no-op
+        // no-op default
     }
 
     /**
      * Invokes the delegate's {@code close()} method.
+     *
      * @throws IOException if an I/O error occurs.
      */
     @Override
@@ -122,11 +131,12 @@ public abstract class ProxyInputStream extends FilterInputStream {
     }
 
     /**
-     * Handle any IOExceptions thrown; by default, throws the given exception.
+     * Handles any IOExceptions thrown; by default, throws the given exception.
      * <p>
      * This method provides a point to implement custom exception
      * handling. The default behavior is to re-throw the exception.
      * </p>
+     *
      * @param e The IOException thrown
      * @throws IOException if an I/O error occurs.
      * @since 2.0
@@ -137,15 +147,17 @@ public abstract class ProxyInputStream extends FilterInputStream {
 
     /**
      * Invokes the delegate's {@code mark(int)} method.
-     * @param readlimit read ahead limit
+     *
+     * @param readLimit read ahead limit
      */
     @Override
-    public synchronized void mark(final int readlimit) {
-        in.mark(readlimit);
+    public synchronized void mark(final int readLimit) {
+        in.mark(readLimit);
     }
 
     /**
      * Invokes the delegate's {@code markSupported()} method.
+     *
      * @return true if mark is supported, otherwise false
      */
     @Override
@@ -155,6 +167,7 @@ public abstract class ProxyInputStream extends FilterInputStream {
 
     /**
      * Invokes the delegate's {@code read()} method.
+     *
      * @return the byte read or -1 if the end of stream
      * @throws IOException if an I/O error occurs.
      */
@@ -173,15 +186,16 @@ public abstract class ProxyInputStream extends FilterInputStream {
 
     /**
      * Invokes the delegate's {@code read(byte[])} method.
-     * @param bts the buffer to read the bytes into
+     *
+     * @param b the buffer to read the bytes into
      * @return the number of bytes read or EOF if the end of stream
      * @throws IOException if an I/O error occurs.
      */
     @Override
-    public int read(final byte[] bts) throws IOException {
+    public int read(final byte[] b) throws IOException {
         try {
-            beforeRead(IOUtils.length(bts));
-            final int n = in.read(bts);
+            beforeRead(IOUtils.length(b));
+            final int n = in.read(b);
             afterRead(n);
             return n;
         } catch (final IOException e) {
@@ -192,17 +206,18 @@ public abstract class ProxyInputStream extends FilterInputStream {
 
     /**
      * Invokes the delegate's {@code read(byte[], int, int)} method.
-     * @param bts the buffer to read the bytes into
+     *
+     * @param b the buffer to read the bytes into
      * @param off The start offset
      * @param len The number of bytes to read
      * @return the number of bytes read or -1 if the end of stream
      * @throws IOException if an I/O error occurs.
      */
     @Override
-    public int read(final byte[] bts, final int off, final int len) throws IOException {
+    public int read(final byte[] b, final int off, final int len) throws IOException {
         try {
             beforeRead(len);
-            final int n = in.read(bts, off, len);
+            final int n = in.read(b, off, len);
             afterRead(n);
             return n;
         } catch (final IOException e) {
@@ -213,6 +228,7 @@ public abstract class ProxyInputStream extends FilterInputStream {
 
     /**
      * Invokes the delegate's {@code reset()} method.
+     *
      * @throws IOException if an I/O error occurs.
      */
     @Override
@@ -226,18 +242,30 @@ public abstract class ProxyInputStream extends FilterInputStream {
 
     /**
      * Invokes the delegate's {@code skip(long)} method.
-     * @param ln the number of bytes to skip
+     *
+     * @param n the number of bytes to skip
      * @return the actual number of bytes skipped
      * @throws IOException if an I/O error occurs.
      */
     @Override
-    public long skip(final long ln) throws IOException {
+    public long skip(final long n) throws IOException {
         try {
-            return in.skip(ln);
+            return in.skip(n);
         } catch (final IOException e) {
             handleIOException(e);
             return 0;
         }
     }
 
+    /**
+     * Unwraps this instance by returning the underlying InputStream.
+     * <p>
+     * Use with caution; useful to query the underlying InputStream.
+     * </p>
+     * @return the underlying InputStream.
+     * @since 2.16.0
+     */
+    public InputStream unwrap() {
+        return in;
+    }
 }

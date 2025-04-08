@@ -43,11 +43,11 @@
 Apache Commons IO
 ===================
 
-[![GitHub Actions Status](https://github.com/apache/commons-io/workflows/Java%20CI/badge.svg)](https://github.com/apache/commons-io/actions)
+[![Java CI](https://github.com/apache/commons-io/actions/workflows/maven.yml/badge.svg)](https://github.com/apache/commons-io/actions/workflows/maven.yml)
 [![Coverage Status](https://codecov.io/gh/apache/commons-io/branch/master/graph/badge.svg)](https://app.codecov.io/gh/apache/commons-io)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/commons-io/commons-io/badge.svg?gav=true)](https://maven-badges.herokuapp.com/maven-central/commons-io/commons-io/?gav=true)
-[![Javadocs](https://javadoc.io/badge/commons-io/commons-io/2.15.0.svg)](https://javadoc.io/doc/commons-io/commons-io/2.15.0)
-[![CodeQL](https://github.com/apache/commons-io/workflows/CodeQL/badge.svg)](https://github.com/apache/commons-io/actions/workflows/codeql-analysis.yml?query=workflow%3ACodeQL)
+[![Javadocs](https://javadoc.io/badge/commons-io/commons-io/2.16.0.svg)](https://javadoc.io/doc/commons-io/commons-io/2.16.0)
+[![CodeQL](https://github.com/apache/commons-io/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/apache/commons-io/actions/workflows/codeql-analysis.yml)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/apache/commons-io/badge)](https://api.securityscorecards.dev/projects/github.com/apache/commons-io)
 
 The Apache Commons IO library contains utility classes, stream implementations, file filters,
@@ -58,7 +58,7 @@ Documentation
 
 More information can be found on the [Apache Commons IO homepage](https://commons.apache.org/proper/commons-io).
 The [Javadoc](https://commons.apache.org/proper/commons-io/apidocs) can be browsed.
-Questions related to the usage of Apache Commons IO should be posted to the [user mailing list][ml].
+Questions related to the usage of Apache Commons IO should be posted to the [user mailing list](https://commons.apache.org/mail-lists.html).
 
 Getting the latest release
 --------------------------
@@ -70,7 +70,7 @@ Alternatively, you can pull it from  the central Maven repositories:
 <dependency>
   <groupId>commons-io</groupId>
   <artifactId>commons-io</artifactId>
-  <version>2.15.0</version>
+  <version>2.16.0</version>
 </dependency>
 ```
 
@@ -112,7 +112,6 @@ Additional Resources
 + [Apache Issue Tracker (JIRA)](https://issues.apache.org/jira/browse/IO)
 + [Apache Commons Slack Channel](https://the-asf.slack.com/archives/C60NVB8AD)
 + [Apache Commons Twitter Account](https://twitter.com/ApacheCommons)
-+ `#apache-commons` IRC channel on `irc.freenode.org`
 
 Apache Commons Components
 -------------------------
