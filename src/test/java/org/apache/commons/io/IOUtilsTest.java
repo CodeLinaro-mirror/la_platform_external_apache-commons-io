@@ -26,6 +26,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -147,15 +148,11 @@ public class IOUtilsTest {
             if (!testFile.getParentFile().exists()) {
                 throw new IOException("Cannot create file " + testFile + " as the parent directory does not exist");
             }
-            final BufferedOutputStream output = new BufferedOutputStream(Files.newOutputStream(testFilePath));
-            try {
+            try (BufferedOutputStream output = new BufferedOutputStream(Files.newOutputStream(testFilePath))) {
                 TestUtils.generateTestData(output, FILE_SIZE);
-            } finally {
-                IOUtils.closeQuietly(output);
             }
-        } catch (final IOException ioe) {
-            throw new RuntimeException(
-                "Can't run this test because the environment could not be built: " + ioe.getMessage());
+        } catch (final IOException e) {
+            fail("Can't run this test because the environment could not be built: " + e.getMessage());
         }
         // Create and init a byte array as input data
         iarr = new byte[200];
@@ -484,14 +481,14 @@ public class IOUtilsTest {
     @Test
     public void testConsumeInputStream() throws Exception {
         final long size = (long) Integer.MAX_VALUE + (long) 1;
-        final InputStream in = new NullInputStream(size);
+        final NullInputStream in = new NullInputStream(size);
         final OutputStream out = NullOutputStream.INSTANCE;
 
         // Test copy() method
         assertEquals(-1, IOUtils.copy(in, out));
 
         // reset the input
-        in.close();
+        in.init();
 
         // Test consume() method
         assertEquals(size, IOUtils.consume(in), "consume()");
@@ -1019,6 +1016,36 @@ public class IOUtilsTest {
     }
 
     @Test
+    public void testReadLines_CharSequence() throws IOException {
+        final File file = TestUtils.newFile(temporaryFolder, "lines.txt");
+        CharSequence csq = null;
+        try {
+            final String[] data = {"hello", "/u1234", "", "this is", "some text"};
+            TestUtils.createLineBasedFile(file, data);
+            csq = new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8);
+            final List<String> lines = IOUtils.readLines(csq);
+            assertEquals(Arrays.asList(data), lines);
+        } finally {
+            TestUtils.deleteFile(file);
+        }
+    }
+
+    @Test
+    public void testReadLines_CharSequenceAsStringBuilder() throws IOException {
+        final File file = TestUtils.newFile(temporaryFolder, "lines.txt");
+        StringBuilder csq = null;
+        try {
+            final String[] data = {"hello", "/u1234", "", "this is", "some text"};
+            TestUtils.createLineBasedFile(file, data);
+            csq = new StringBuilder(new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8));
+            final List<String> lines = IOUtils.readLines(csq);
+            assertEquals(Arrays.asList(data), lines);
+        } finally {
+            TestUtils.deleteFile(file);
+        }
+    }
+
+    @Test
     public void testReadLines_InputStream() throws Exception {
         final File file = TestUtils.newFile(temporaryFolder, "lines.txt");
         InputStream in = null;
@@ -1061,7 +1088,6 @@ public class IOUtilsTest {
         try {
             final String[] data = {"hello", "/u1234", "", "this is", "some text"};
             TestUtils.createLineBasedFile(file, data);
-
             in = new InputStreamReader(Files.newInputStream(file.toPath()));
             final List<String> lines = IOUtils.readLines(in);
             assertEquals(Arrays.asList(data), lines);
@@ -1269,7 +1295,7 @@ public class IOUtilsTest {
         assertTrue(IOUtils.contentEqualsIgnoreEOL(
                 new CharArrayReader(s1.toCharArray()),
                 new CharArrayReader(s1.toCharArray())
-        ),"failed at :{" + s1 + "," + s1 + "}");
+        ), "failed at :{" + s1 + "," + s1 + "}");
         assertTrue(IOUtils.contentEqualsIgnoreEOL(
                 new CharArrayReader(s2.toCharArray()),
                 new CharArrayReader(s2.toCharArray())
@@ -1683,7 +1709,7 @@ public class IOUtilsTest {
 
     @Test
     public void testToString_URI_CharsetName() throws Exception {
-        testToString_URI("US-ASCII");
+        testToString_URI(StandardCharsets.US_ASCII.name());
     }
 
     @Test
@@ -1708,7 +1734,7 @@ public class IOUtilsTest {
 
     @Test
     public void testToString_URL_CharsetName() throws Exception {
-        testToString_URL("US-ASCII");
+        testToString_URL(StandardCharsets.US_ASCII.name());
     }
 
     @Test
@@ -1753,7 +1779,7 @@ public class IOUtilsTest {
     public void testWriteLines() throws IOException {
         final String[] data = {"The", "quick"};
         final ByteArrayOutputStream out = new ByteArrayOutputStream();
-        IOUtils.writeLines(Arrays.asList(data), "\n", out, "UTF-16");
+        IOUtils.writeLines(Arrays.asList(data), "\n", out, StandardCharsets.UTF_16.name());
         final String result = new String(out.toByteArray(), StandardCharsets.UTF_16);
         assertEquals("The\nquick\n", result);
     }

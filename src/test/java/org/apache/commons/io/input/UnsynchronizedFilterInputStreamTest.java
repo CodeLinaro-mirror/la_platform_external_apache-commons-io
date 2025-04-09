@@ -1,25 +1,25 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.apache.commons.io.input;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-
-/*
- *  Licensed to the Apache Software Foundation (ASF) under one or more
- *  contributor license agreements.  See the NOTICE file distributed with
- *  this work for additional information regarding copyright ownership.
- *  The ASF licenses this file to You under the Apache License, Version 2.0
- *  (the "License"); you may not use this file except in compliance with
- *  the License.  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -129,8 +129,8 @@ public class UnsynchronizedFilterInputStreamTest {
     @Test
     public void test_read$B() throws IOException {
         final byte[] buf1 = new byte[100];
-        is.read(buf1);
-        assertTrue(new String(buf1, 0, buf1.length, "UTF-8").equals(DATA.substring(0, 100)), "Failed to read correct data");
+        assertEquals(buf1.length, is.read(buf1));
+        assertTrue(new String(buf1, 0, buf1.length, StandardCharsets.UTF_8).equals(DATA.substring(0, 100)), "Failed to read correct data");
     }
 
     /**
@@ -144,7 +144,7 @@ public class UnsynchronizedFilterInputStreamTest {
         is.skip(3000);
         is.mark(1000);
         is.read(buf1, 0, buf1.length);
-        assertTrue(new String(buf1, 0, buf1.length, "UTF-8").equals(DATA.substring(3000, 3100)), "Failed to read correct data");
+        assertTrue(new String(buf1, 0, buf1.length, StandardCharsets.UTF_8).equals(DATA.substring(3000, 3100)), "Failed to read correct data");
     }
 
     /**
@@ -166,6 +166,6 @@ public class UnsynchronizedFilterInputStreamTest {
         final byte[] buf1 = new byte[10];
         is.skip(1000);
         is.read(buf1, 0, buf1.length);
-        assertTrue(new String(buf1, 0, buf1.length, "UTF-8").equals(DATA.substring(1000, 1010)), "Failed to skip to correct position");
+        assertTrue(new String(buf1, 0, buf1.length, StandardCharsets.UTF_8).equals(DATA.substring(1000, 1010)), "Failed to skip to correct position");
     }
 }

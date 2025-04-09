@@ -16,8 +16,11 @@
  */
 package org.apache.commons.io.output;
 
+import java.io.BufferedWriter;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
@@ -39,16 +42,16 @@ import org.apache.commons.io.charset.CharsetDecoders;
  * <p>
  * The output of the {@link CharsetDecoder} is buffered using a fixed size buffer. This implies that the data is written to the underlying {@link Writer} in
  * chunks that are no larger than the size of this buffer. By default, the buffer is flushed only when it overflows or when {@link #flush()} or {@link #close()}
- * is called. In general there is therefore no need to wrap the underlying {@link Writer} in a {@link java.io.BufferedWriter}. {@link WriterOutputStream} can
+ * is called. In general there is therefore no need to wrap the underlying {@link Writer} in a {@link BufferedWriter}. {@link WriterOutputStream} can
  * also be instructed to flush the buffer after each write operation. In this case, all available data is written immediately to the underlying {@link Writer},
  * implying that the current position of the {@link Writer} is correlated to the current position of the {@link WriterOutputStream}.
  * </p>
  * <p>
- * {@link WriterOutputStream} implements the inverse transformation of {@link java.io.OutputStreamWriter}; in the following example, writing to {@code out2}
+ * {@link WriterOutputStream} implements the inverse transformation of {@link OutputStreamWriter}; in the following example, writing to {@code out2}
  * would have the same result as writing to {@code out} directly (provided that the byte sequence is legal with respect to the charset encoding):
  * </p>
  * <p>
- * To build an instance, see {@link Builder}.
+ * To build an instance, use {@link Builder}.
  * </p>
  * <pre>
  * OutputStream out = ...
@@ -60,8 +63,8 @@ import org.apache.commons.io.charset.CharsetDecoders;
  *   .get();
  * </pre>
  * <p>
- * {@link WriterOutputStream} implements the same transformation as {@link java.io.InputStreamReader}, except that the control flow is reversed: both classes
- * transform a byte stream into a character stream, but {@link java.io.InputStreamReader} pulls data from the underlying stream, while
+ * {@link WriterOutputStream} implements the same transformation as {@link InputStreamReader}, except that the control flow is reversed: both classes
+ * transform a byte stream into a character stream, but {@link InputStreamReader} pulls data from the underlying stream, while
  * {@link WriterOutputStream} pushes it to the underlying stream.
  * </p>
  * <p>
@@ -73,13 +76,16 @@ import org.apache.commons.io.charset.CharsetDecoders;
  * Instances of {@link WriterOutputStream} are not thread safe.
  * </p>
  *
+ * @see Builder
  * @see org.apache.commons.io.input.ReaderInputStream
  * @since 2.0
  */
 public class WriterOutputStream extends OutputStream {
 
+    // @formatter:off
     /**
-     * Builds a new {@link WriterOutputStream} instance.
+     * Builds a new {@link WriterOutputStream}.
+     *
      * <p>
      * For example:
      * </p>
@@ -92,8 +98,10 @@ public class WriterOutputStream extends OutputStream {
      *   .get();}
      * </pre>
      *
+     * @see #get()
      * @since 2.12.0
      */
+    // @formatter:on
     public static class Builder extends AbstractStreamBuilder<WriterOutputStream, Builder> {
 
         private CharsetDecoder charsetDecoder;
@@ -107,14 +115,19 @@ public class WriterOutputStream extends OutputStream {
         }
 
         /**
-         * Constructs a new instance.
+         * Builds a new {@link WriterOutputStream}.
          * <p>
-         * This builder use the aspect Writer, OpenOption[], Charset, CharsetDecoder, buffer size and writeImmediately.
+         * You must set input that supports {@link #getWriter()} on this builder, otherwise, this method throws an exception.
          * </p>
          * <p>
-         * You must provide an origin that can be converted to a Writer by this builder, otherwise, this call will throw an
-         * {@link UnsupportedOperationException}.
+         * This builder use the following aspects:
          * </p>
+         * <ul>
+         * <li>{@link #getWriter()}</li>
+         * <li>{@link #getBufferSize()}</li>
+         * <li>charsetDecoder</li>
+         * <li>writeImmediately</li>
+         * </ul>
          *
          * @return a new instance.
          * @throws UnsupportedOperationException if the origin cannot provide a Writer.
@@ -144,7 +157,7 @@ public class WriterOutputStream extends OutputStream {
          * Sets the charset decoder.
          *
          * @param charsetDecoder the charset decoder.
-         * @return this
+         * @return {@code this} instance.
          */
         public Builder setCharsetDecoder(final CharsetDecoder charsetDecoder) {
             this.charsetDecoder = charsetDecoder != null ? charsetDecoder : getCharsetDefault().newDecoder();
@@ -153,14 +166,14 @@ public class WriterOutputStream extends OutputStream {
         }
 
         /**
-         * Sets whether the output buffer will be flushed after each write operation ({@code true}), i.e. all available data will be written to the underlying
-         * {@link Writer} immediately. If {@code false}, the output buffer will only be flushed when it overflows or when {@link #flush()} or {@link #close()}
-         * is called.
+         * Sets whether the output buffer will be flushed after each write operation ({@code true}), meaning all available data will be written to the
+         * underlying {@link Writer} immediately. If {@code false}, the output buffer will only be flushed when it overflows or when {@link #flush()} or
+         * {@link #close()} is called.
          *
-         * @param writeImmediately If {@code true} the output buffer will be flushed after each write operation, i.e. all available data will be written to the
-         *                         underlying {@link Writer} immediately. If {@code false}, the output buffer will only be flushed when it overflows or when
+         * @param writeImmediately If {@code true} the output buffer will be flushed after each write operation, meaning all available data will be written to
+         *                         the underlying {@link Writer} immediately. If {@code false}, the output buffer will only be flushed when it overflows or when
          *                         {@link #flush()} or {@link #close()} is called.
-         * @return this
+         * @return {@code this} instance.
          */
         public Builder setWriteImmediately(final boolean writeImmediately) {
             this.writeImmediately = writeImmediately;
@@ -262,7 +275,7 @@ public class WriterOutputStream extends OutputStream {
      * @param writer           the target {@link Writer}
      * @param charset          the charset encoding
      * @param bufferSize       the size of the output buffer in number of characters
-     * @param writeImmediately If {@code true} the output buffer will be flushed after each write operation, i.e. all available data will be written to the
+     * @param writeImmediately If {@code true} the output buffer will be flushed after each write operation, meaning all available data will be written to the
      *                         underlying {@link Writer} immediately. If {@code false}, the output buffer will only be flushed when it overflows or when
      *                         {@link #flush()} or {@link #close()} is called.
      * @deprecated Use {@link #builder()}, {@link Builder}, and {@link Builder#get()}
@@ -300,7 +313,7 @@ public class WriterOutputStream extends OutputStream {
      * @param writer           the target {@link Writer}
      * @param decoder          the charset decoder
      * @param bufferSize       the size of the output buffer in number of characters
-     * @param writeImmediately If {@code true} the output buffer will be flushed after each write operation, i.e. all available data will be written to the
+     * @param writeImmediately If {@code true} the output buffer will be flushed after each write operation, meaning all available data will be written to the
      *                         underlying {@link Writer} immediately. If {@code false}, the output buffer will only be flushed when it overflows or when
      *                         {@link #flush()} or {@link #close()} is called.
      * @since 2.1
@@ -334,7 +347,7 @@ public class WriterOutputStream extends OutputStream {
      * @param writer           the target {@link Writer}
      * @param charsetName      the name of the charset encoding
      * @param bufferSize       the size of the output buffer in number of characters
-     * @param writeImmediately If {@code true} the output buffer will be flushed after each write operation, i.e. all available data will be written to the
+     * @param writeImmediately If {@code true} the output buffer will be flushed after each write operation, meaning all available data will be written to the
      *                         underlying {@link Writer} immediately. If {@code false}, the output buffer will only be flushed when it overflows or when
      *                         {@link #flush()} or {@link #close()} is called.
      * @deprecated Use {@link #builder()}, {@link Builder}, and {@link Builder#get()}

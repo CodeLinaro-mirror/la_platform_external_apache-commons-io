@@ -43,15 +43,15 @@ import java.nio.file.attribute.BasicFileAttributes;
  * final Path dir = PathUtils.current();
  * final AccumulatorPathVisitor visitor = AccumulatorPathVisitor.withLongCounters(FileFileFilter.INSTANCE);
  * //
- * // Walk one dir
- * Files.<b>walkFileTree</b>(dir, Collections.emptySet(), 1, visitor);
+ * // Walk one directory
+ * Files.<strong>walkFileTree</strong>(dir, Collections.emptySet(), 1, visitor);
  * System.out.println(visitor.getPathCounters());
  * System.out.println(visitor.getFileList());
  * //
  * visitor.getPathCounters().reset();
  * //
- * // Walk dir tree
- * Files.<b>walkFileTree</b>(dir, visitor);
+ * // Walk directory tree
+ * Files.<strong>walkFileTree</strong>(dir, visitor);
  * System.out.println(visitor.getPathCounters());
  * System.out.println(visitor.getDirList());
  * System.out.println(visitor.getFileList());
@@ -97,19 +97,20 @@ public class FileFileFilter extends AbstractFileFilter implements Serializable {
      */
     @Override
     public boolean accept(final File file) {
-        return file.isFile();
+        return file != null && file.isFile();
     }
 
     /**
      * Checks to see if the file is a file.
-     * @param file  the File to check
      *
+     * @param file  the File to check
+     * @param attributes the path's basic attributes (may be null).
      * @return true if the file is a file
      * @since 2.9.0
      */
     @Override
     public FileVisitResult accept(final Path file, final BasicFileAttributes attributes) {
-        return toFileVisitResult(Files.isRegularFile(file));
+        return toFileVisitResult(file != null && Files.isRegularFile(file));
     }
 
 }

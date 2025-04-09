@@ -60,9 +60,11 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -70,6 +72,7 @@ import java.util.stream.Stream;
 import org.apache.commons.io.Charsets;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.RandomAccessFileMode;
 import org.apache.commons.io.RandomAccessFiles;
 import org.apache.commons.io.ThreadUtils;
@@ -87,8 +90,7 @@ import org.apache.commons.io.function.IOSupplier;
 public final class PathUtils {
 
     /**
-     * Private worker/holder that computes and tracks relative path names and their equality. We reuse the sorted relative
-     * lists when comparing directories.
+     * Private worker/holder that computes and tracks relative path names and their equality. We reuse the sorted relative lists when comparing directories.
      */
     private static final class RelativeSortedPaths {
 
@@ -101,15 +103,15 @@ public final class PathUtils {
         /**
          * Constructs and initializes a new instance by accumulating directory and file info.
          *
-         * @param dir1 First directory to compare.
-         * @param dir2 Seconds directory to compare.
-         * @param maxDepth See {@link Files#walkFileTree(Path,Set,int,FileVisitor)}.
-         * @param linkOptions Options indicating how symbolic links are handled.
+         * @param dir1             First directory to compare.
+         * @param dir2             Seconds directory to compare.
+         * @param maxDepth         See {@link Files#walkFileTree(Path,Set,int,FileVisitor)}.
+         * @param linkOptions      Options indicating how symbolic links are handled.
          * @param fileVisitOptions See {@link Files#walkFileTree(Path,Set,int,FileVisitor)}.
          * @throws IOException if an I/O error is thrown by a visitor method.
          */
         private RelativeSortedPaths(final Path dir1, final Path dir2, final int maxDepth, final LinkOption[] linkOptions,
-            final FileVisitOption[] fileVisitOptions) throws IOException {
+                final FileVisitOption[] fileVisitOptions) throws IOException {
             final List<Path> tmpRelativeDirList1;
             final List<Path> tmpRelativeDirList2;
             List<Path> tmpRelativeFileList1 = null;
@@ -148,9 +150,9 @@ public final class PathUtils {
         }
     }
 
-    private static final OpenOption[] OPEN_OPTIONS_TRUNCATE = {StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING};
+    private static final OpenOption[] OPEN_OPTIONS_TRUNCATE = { StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING };
 
-    private static final OpenOption[] OPEN_OPTIONS_APPEND = {StandardOpenOption.CREATE, StandardOpenOption.APPEND};
+    private static final OpenOption[] OPEN_OPTIONS_APPEND = { StandardOpenOption.CREATE, StandardOpenOption.APPEND };
 
     /**
      * Empty {@link CopyOption} array.
@@ -190,7 +192,7 @@ public final class PathUtils {
      * @deprecated Use {@link #noFollowLinkOptionArray()}.
      */
     @Deprecated
-    public static final LinkOption[] NOFOLLOW_LINK_OPTION_ARRAY = {LinkOption.NOFOLLOW_LINKS};
+    public static final LinkOption[] NOFOLLOW_LINK_OPTION_ARRAY = { LinkOption.NOFOLLOW_LINKS };
 
     /**
      * A LinkOption used to follow link in this class, the inverse of {@link LinkOption#NOFOLLOW_LINKS}.
@@ -214,8 +216,8 @@ public final class PathUtils {
     /**
      * Accumulates file tree information in a {@link AccumulatorPathVisitor}.
      *
-     * @param directory The directory to accumulate information.
-     * @param maxDepth See {@link Files#walkFileTree(Path,Set,int,FileVisitor)}.
+     * @param directory        The directory to accumulate information.
+     * @param maxDepth         See {@link Files#walkFileTree(Path,Set,int,FileVisitor)}.
      * @param fileVisitOptions See {@link Files#walkFileTree(Path,Set,int,FileVisitor)}.
      * @throws IOException if an I/O error is thrown by a visitor method.
      * @return file tree information.
@@ -225,7 +227,7 @@ public final class PathUtils {
     }
 
     /**
-     * Cleans a directory including subdirectories without deleting directories.
+     * Cleans a directory by deleting only files, including in subdirectories, but without deleting the directories.
      *
      * @param directory directory to clean.
      * @return The visitation path counters.
@@ -236,9 +238,9 @@ public final class PathUtils {
     }
 
     /**
-     * Cleans a directory including subdirectories without deleting directories.
+     * Cleans a directory by deleting only files, including in subdirectories, but without deleting the directories.
      *
-     * @param directory directory to clean.
+     * @param directory     directory to clean.
      * @param deleteOptions How to handle deletion.
      * @return The visitation path counters.
      * @throws IOException if an I/O error is thrown by a visitor method.
@@ -251,11 +253,11 @@ public final class PathUtils {
     /**
      * Compares the given {@link Path}'s last modified time to the given file time.
      *
-     * @param file the {@link Path} to test.
+     * @param file     the {@link Path} to test.
      * @param fileTime the time reference.
-     * @param options options indicating how to handle symbolic links.
+     * @param options  options indicating how to handle symbolic links.
      * @return See {@link FileTime#compareTo(FileTime)}
-     * @throws IOException if an I/O error occurs.
+     * @throws IOException          if an I/O error occurs.
      * @throws NullPointerException if the file is {@code null}.
      */
     private static int compareLastModifiedTimeTo(final Path file, final FileTime fileTime, final LinkOption... options) throws IOException {
@@ -265,8 +267,8 @@ public final class PathUtils {
     /**
      * Copies the InputStream from the supplier with {@link Files#copy(InputStream, Path, CopyOption...)}.
      *
-     * @param in Supplies the InputStream.
-     * @param target See {@link Files#copy(InputStream, Path, CopyOption...)}.
+     * @param in          Supplies the InputStream.
+     * @param target      See {@link Files#copy(InputStream, Path, CopyOption...)}.
      * @param copyOptions See {@link Files#copy(InputStream, Path, CopyOption...)}.
      * @return See {@link Files#copy(InputStream, Path, CopyOption...)}
      * @throws IOException See {@link Files#copy(InputStream, Path, CopyOption...)}
@@ -283,21 +285,21 @@ public final class PathUtils {
      *
      * @param sourceDirectory The source directory.
      * @param targetDirectory The target directory.
-     * @param copyOptions Specifies how the copying should be done.
+     * @param copyOptions     Specifies how the copying should be done.
      * @return The visitation path counters.
      * @throws IOException if an I/O error is thrown by a visitor method.
      */
     public static PathCounters copyDirectory(final Path sourceDirectory, final Path targetDirectory, final CopyOption... copyOptions) throws IOException {
         final Path absoluteSource = sourceDirectory.toAbsolutePath();
         return visitFileTree(new CopyDirectoryVisitor(Counters.longPathCounters(), absoluteSource, targetDirectory, copyOptions), absoluteSource)
-            .getPathCounters();
+                .getPathCounters();
     }
 
     /**
      * Copies a URL to a directory.
      *
-     * @param sourceFile The source URL.
-     * @param targetFile The target file.
+     * @param sourceFile  The source URL.
+     * @param targetFile  The target file.
      * @param copyOptions Specifies how the copying should be done.
      * @return The target file
      * @throws IOException if an I/O error occurs.
@@ -311,9 +313,9 @@ public final class PathUtils {
     /**
      * Copies a file to a directory.
      *
-     * @param sourceFile The source file.
+     * @param sourceFile      The source file.
      * @param targetDirectory The target directory.
-     * @param copyOptions Specifies how the copying should be done.
+     * @param copyOptions     Specifies how the copying should be done.
      * @return The target file
      * @throws IOException if an I/O error occurs.
      * @see Files#copy(Path, Path, CopyOption...)
@@ -325,9 +327,9 @@ public final class PathUtils {
     /**
      * Copies a URL to a directory.
      *
-     * @param sourceFile The source URL.
+     * @param sourceFile      The source URL.
      * @param targetDirectory The target directory.
-     * @param copyOptions Specifies how the copying should be done.
+     * @param copyOptions     Specifies how the copying should be done.
      * @return The target file
      * @throws IOException if an I/O error occurs.
      * @see Files#copy(InputStream, Path, CopyOption...)
@@ -367,7 +369,7 @@ public final class PathUtils {
      * If the parent directory already exists, then return it.
      * </p>
      *
-     * @param path The path to a file (or directory).
+     * @param path  The path to a file (or directory).
      * @param attrs An optional list of file attributes to set atomically when creating the directories.
      * @return The Path for the {@code path}'s parent directory or null if the given path has no parent.
      * @throws IOException if an I/O error occurs.
@@ -383,15 +385,14 @@ public final class PathUtils {
      * If the parent directory already exists, then return it.
      * </p>
      *
-     * @param path The path to a file (or directory).
+     * @param path       The path to a file (or directory).
      * @param linkOption A {@link LinkOption} or null.
-     * @param attrs An optional list of file attributes to set atomically when creating the directories.
+     * @param attrs      An optional list of file attributes to set atomically when creating the directories.
      * @return The Path for the {@code path}'s parent directory or null if the given path has no parent.
      * @throws IOException if an I/O error occurs.
      * @since 2.12.0
      */
-    public static Path createParentDirectories(final Path path, final LinkOption linkOption,
-            final FileAttribute<?>... attrs) throws IOException {
+    public static Path createParentDirectories(final Path path, final LinkOption linkOption, final FileAttribute<?>... attrs) throws IOException {
         Path parent = getParent(path);
         parent = linkOption == LinkOption.NOFOLLOW_LINKS ? parent : readIfSymbolicLink(parent);
         if (parent == null) {
@@ -415,17 +416,17 @@ public final class PathUtils {
     /**
      * Deletes a file or directory. If the path is a directory, delete it and all subdirectories.
      * <p>
-     * The difference between File.delete() and this method are:
+     * The difference between {@link File#delete()} and this method are:
      * </p>
      * <ul>
      * <li>A directory to delete does not have to be empty.</li>
-     * <li>You get exceptions when a file or directory cannot be deleted; {@link java.io.File#delete()} returns a boolean.
+     * <li>You get exceptions when a file or directory cannot be deleted; {@link File#delete()} returns a boolean.
      * </ul>
      *
      * @param path file or directory to delete, must not be {@code null}
      * @return The visitor used to delete the given directory.
      * @throws NullPointerException if the directory is {@code null}
-     * @throws IOException if an I/O error is thrown by a visitor method or if an I/O error occurs.
+     * @throws IOException          if an I/O error is thrown by a visitor method or if an I/O error occurs.
      */
     public static PathCounters delete(final Path path) throws IOException {
         return delete(path, EMPTY_DELETE_OPTION_ARRAY);
@@ -438,14 +439,14 @@ public final class PathUtils {
      * </p>
      * <ul>
      * <li>A directory to delete does not have to be empty.</li>
-     * <li>You get exceptions when a file or directory cannot be deleted; {@link java.io.File#delete()} returns a boolean.
+     * <li>You get exceptions when a file or directory cannot be deleted; {@link File#delete()} returns a boolean.
      * </ul>
      *
-     * @param path file or directory to delete, must not be {@code null}
+     * @param path          file or directory to delete, must not be {@code null}
      * @param deleteOptions How to handle deletion.
      * @return The visitor used to delete the given directory.
      * @throws NullPointerException if the directory is {@code null}
-     * @throws IOException if an I/O error is thrown by a visitor method or if an I/O error occurs.
+     * @throws IOException          if an I/O error is thrown by a visitor method or if an I/O error occurs.
      * @since 2.8.0
      */
     public static PathCounters delete(final Path path, final DeleteOption... deleteOptions) throws IOException {
@@ -460,15 +461,15 @@ public final class PathUtils {
      * </p>
      * <ul>
      * <li>A directory to delete does not have to be empty.</li>
-     * <li>You get exceptions when a file or directory cannot be deleted; {@link java.io.File#delete()} returns a boolean.
+     * <li>You get exceptions when a file or directory cannot be deleted; {@link File#delete()} returns a boolean.
      * </ul>
      *
-     * @param path file or directory to delete, must not be {@code null}
-     * @param linkOptions How to handle symbolic links.
+     * @param path          file or directory to delete, must not be {@code null}
+     * @param linkOptions   How to handle symbolic links.
      * @param deleteOptions How to handle deletion.
      * @return The visitor used to delete the given directory.
      * @throws NullPointerException if the directory is {@code null}
-     * @throws IOException if an I/O error is thrown by a visitor method or if an I/O error occurs.
+     * @throws IOException          if an I/O error is thrown by a visitor method or if an I/O error occurs.
      * @since 2.9.0
      */
     public static PathCounters delete(final Path path, final LinkOption[] linkOptions, final DeleteOption... deleteOptions) throws IOException {
@@ -490,24 +491,24 @@ public final class PathUtils {
     /**
      * Deletes a directory including subdirectories.
      *
-     * @param directory directory to delete.
+     * @param directory     directory to delete.
      * @param deleteOptions How to handle deletion.
      * @return The visitor used to delete the given directory.
      * @throws IOException if an I/O error is thrown by a visitor method.
      * @since 2.8.0
      */
     public static PathCounters deleteDirectory(final Path directory, final DeleteOption... deleteOptions) throws IOException {
-        final LinkOption[] linkOptions = PathUtils.noFollowLinkOptionArray();
+        final LinkOption[] linkOptions = noFollowLinkOptionArray();
         // POSIX ops will noop on non-POSIX.
         return withPosixFileAttributes(getParent(directory), linkOptions, overrideReadOnly(deleteOptions),
-            pfa -> visitFileTree(new DeletingPathVisitor(Counters.longPathCounters(), linkOptions, deleteOptions), directory).getPathCounters());
+                pfa -> visitFileTree(new DeletingPathVisitor(Counters.longPathCounters(), linkOptions, deleteOptions), directory).getPathCounters());
     }
 
     /**
      * Deletes a directory including subdirectories.
      *
-     * @param directory directory to delete.
-     * @param linkOptions How to handle symbolic links.
+     * @param directory     directory to delete.
+     * @param linkOptions   How to handle symbolic links.
      * @param deleteOptions How to handle deletion.
      * @return The visitor used to delete the given directory.
      * @throws IOException if an I/O error is thrown by a visitor method.
@@ -522,8 +523,8 @@ public final class PathUtils {
      *
      * @param file The file to delete.
      * @return A visitor with path counts set to 1 file, 0 directories, and the size of the deleted file.
-     * @throws IOException if an I/O error occurs.
-     * @throws NoSuchFileException if the file is a directory.
+     * @throws IOException         if an I/O error occurs.
+     * @throws NoSuchFileException if the file is a directory
      */
     public static PathCounters deleteFile(final Path file) throws IOException {
         return deleteFile(file, EMPTY_DELETE_OPTION_ARRAY);
@@ -532,10 +533,10 @@ public final class PathUtils {
     /**
      * Deletes the given file.
      *
-     * @param file The file to delete.
+     * @param file          The file to delete.
      * @param deleteOptions How to handle deletion.
      * @return A visitor with path counts set to 1 file, 0 directories, and the size of the deleted file.
-     * @throws IOException if an I/O error occurs.
+     * @throws IOException         if an I/O error occurs.
      * @throws NoSuchFileException if the file is a directory.
      * @since 2.8.0
      */
@@ -547,18 +548,18 @@ public final class PathUtils {
     /**
      * Deletes the given file.
      *
-     * @param file The file to delete.
-     * @param linkOptions How to handle symbolic links.
+     * @param file          The file to delete.
+     * @param linkOptions   How to handle symbolic links.
      * @param deleteOptions How to handle deletion.
      * @return A visitor with path counts set to 1 file, 0 directories, and the size of the deleted file.
-     * @throws IOException if an I/O error occurs.
+     * @throws IOException         if an I/O error occurs.
      * @throws NoSuchFileException if the file is a directory.
      * @since 2.9.0
      */
     public static PathCounters deleteFile(final Path file, final LinkOption[] linkOptions, final DeleteOption... deleteOptions)
-        throws NoSuchFileException, IOException {
+            throws NoSuchFileException, IOException {
         //
-        // TODO Needs clean up
+        // TODO Needs clean up?
         //
         if (Files.isDirectory(file, linkOptions)) {
             throw new NoSuchFileException(file.toString());
@@ -604,12 +605,12 @@ public final class PathUtils {
      * @since 3.13.0
      */
     public static void deleteOnExit(final Path path) {
-        Objects.requireNonNull(path.toFile()).deleteOnExit();
+        Objects.requireNonNull(path).toFile().deleteOnExit();
     }
 
     /**
-     * Compares the file sets of two Paths to determine if they are equal or not while considering file contents. The
-     * comparison includes all files in all subdirectories.
+     * Compares the file sets of two Paths to determine if they are equal or not while considering file contents. The comparison includes all files in all
+     * subdirectories.
      *
      * @param path1 The first directory.
      * @param path2 The second directory.
@@ -621,19 +622,19 @@ public final class PathUtils {
     }
 
     /**
-     * Compares the file sets of two Paths to determine if they are equal or not while considering file contents. The
-     * comparison includes all files in all subdirectories.
+     * Compares the file sets of two Paths to determine if they are equal or not while considering file contents. The comparison includes all files in all
+     * subdirectories.
      *
-     * @param path1 The first directory.
-     * @param path2 The second directory.
-     * @param linkOptions options to follow links.
-     * @param openOptions options to open files.
+     * @param path1           The first directory.
+     * @param path2           The second directory.
+     * @param linkOptions     options to follow links.
+     * @param openOptions     options to open files.
      * @param fileVisitOption options to configure traversal.
      * @return Whether the two directories contain the same files while considering file contents.
      * @throws IOException if an I/O error is thrown by a visitor method.
      */
     public static boolean directoryAndFileContentEquals(final Path path1, final Path path2, final LinkOption[] linkOptions, final OpenOption[] openOptions,
-        final FileVisitOption[] fileVisitOption) throws IOException {
+            final FileVisitOption[] fileVisitOption) throws IOException {
         // First walk both file trees and gather normalized paths.
         if (path1 == null && path2 == null) {
             return true;
@@ -665,8 +666,8 @@ public final class PathUtils {
     }
 
     /**
-     * Compares the file sets of two Paths to determine if they are equal or not without considering file contents. The
-     * comparison includes all files in all subdirectories.
+     * Compares the file sets of two Paths to determine if they are equal or not without considering file contents. The comparison includes all files in all
+     * subdirectories.
      *
      * @param path1 The first directory.
      * @param path2 The second directory.
@@ -678,25 +679,24 @@ public final class PathUtils {
     }
 
     /**
-     * Compares the file sets of two Paths to determine if they are equal or not without considering file contents. The
-     * comparison includes all files in all subdirectories.
+     * Compares the file sets of two Paths to determine if they are equal or not without considering file contents. The comparison includes all files in all
+     * subdirectories.
      *
-     * @param path1 The first directory.
-     * @param path2 The second directory.
-     * @param maxDepth See {@link Files#walkFileTree(Path,Set,int,FileVisitor)}.
-     * @param linkOptions options to follow links.
+     * @param path1            The first directory.
+     * @param path2            The second directory.
+     * @param maxDepth         See {@link Files#walkFileTree(Path,Set,int,FileVisitor)}.
+     * @param linkOptions      options to follow links.
      * @param fileVisitOptions options to configure the traversal
      * @return Whether the two directories contain the same files without considering file contents.
      * @throws IOException if an I/O error is thrown by a visitor method.
      */
     public static boolean directoryContentEquals(final Path path1, final Path path2, final int maxDepth, final LinkOption[] linkOptions,
-        final FileVisitOption[] fileVisitOptions) throws IOException {
+            final FileVisitOption[] fileVisitOptions) throws IOException {
         return new RelativeSortedPaths(path1, path2, maxDepth, linkOptions, fileVisitOptions).equals;
     }
 
     private static boolean exists(final Path path, final LinkOption... options) {
-        Objects.requireNonNull(path, "path");
-        return options != null ? Files.exists(path, options) : Files.exists(path);
+        return path != null && (options != null ? Files.exists(path, options) : Files.exists(path));
     }
 
     /**
@@ -709,7 +709,7 @@ public final class PathUtils {
      * @param path2 the second stream.
      * @return true if the content of the streams are equal or they both don't exist, false otherwise.
      * @throws NullPointerException if either input is null.
-     * @throws IOException if an I/O error occurs.
+     * @throws IOException          if an I/O error occurs.
      * @see org.apache.commons.io.FileUtils#contentEquals(java.io.File, java.io.File)
      */
     public static boolean fileContentEquals(final Path path1, final Path path2) throws IOException {
@@ -722,13 +722,13 @@ public final class PathUtils {
      * File content is accessed through {@link RandomAccessFileMode#create(Path)}.
      * </p>
      *
-     * @param path1 the first stream.
-     * @param path2 the second stream.
+     * @param path1       the first stream.
+     * @param path2       the second stream.
      * @param linkOptions options specifying how files are followed.
      * @param openOptions ignored.
      * @return true if the content of the streams are equal or they both don't exist, false otherwise.
      * @throws NullPointerException if openOptions is null.
-     * @throws IOException if an I/O error occurs.
+     * @throws IOException          if an I/O error occurs.
      * @see org.apache.commons.io.FileUtils#contentEquals(java.io.File, java.io.File)
      */
     public static boolean fileContentEquals(final Path path1, final Path path2, final LinkOption[] linkOptions, final OpenOption[] openOptions)
@@ -766,16 +766,26 @@ public final class PathUtils {
             // same file
             return true;
         }
+        // Faster:
         try (RandomAccessFile raf1 = RandomAccessFileMode.READ_ONLY.create(path1.toRealPath(linkOptions));
                 RandomAccessFile raf2 = RandomAccessFileMode.READ_ONLY.create(path2.toRealPath(linkOptions))) {
             return RandomAccessFiles.contentEquals(raf1, raf2);
+        } catch (final UnsupportedOperationException e) {
+            // Slower:
+            // Handle
+            // java.lang.UnsupportedOperationException
+            // at com.sun.nio.zipfs.ZipPath.toFile(ZipPath.java:656)
+            try (InputStream inputStream1 = Files.newInputStream(nPath1, openOptions);
+                    InputStream inputStream2 = Files.newInputStream(nPath2, openOptions)) {
+                return IOUtils.contentEquals(inputStream1, inputStream2);
+            }
         }
     }
 
     /**
      * <p>
-     * Applies an {@link IOFileFilter} to the provided {@link File} objects. The resulting array is a subset of the original
-     * file list that matches the provided filter.
+     * Applies an {@link IOFileFilter} to the provided {@link File} objects. The resulting array is a subset of the original file list that matches the provided
+     * filter.
      * </p>
      *
      * <p>
@@ -789,10 +799,10 @@ public final class PathUtils {
      * </pre>
      *
      * @param filter the filter to apply to the set of files.
-     * @param paths the array of files to apply the filter to.
+     * @param paths  the array of files to apply the filter to.
      *
      * @return a subset of {@code files} that is accepted by the file filter.
-     * @throws NullPointerException if the filter is {@code null}
+     * @throws NullPointerException     if the filter is {@code null}
      * @throws IllegalArgumentException if {@code files} contains a {@code null} value.
      *
      * @since 2.9.0
@@ -836,7 +846,7 @@ public final class PathUtils {
     /**
      * Shorthand for {@code Files.getFileAttributeView(path, AclFileAttributeView.class)}.
      *
-     * @param path the path to the file.
+     * @param path    the path to the file.
      * @param options how to handle symbolic links.
      * @return a AclFileAttributeView, or {@code null} if the attribute view type is not available.
      * @since 2.12.0
@@ -846,9 +856,27 @@ public final class PathUtils {
     }
 
     /**
-     * Shorthand for {@code Files.getFileAttributeView(path, DosFileAttributeView.class)}.
+     * Gets the base name (the part up to and not including the last ".") of the last path segment of a file name.
+     * <p>
+     * Will return the file name itself if it doesn't contain any dots. All leading directories of the {@code file name} parameter are skipped.
+     * </p>
      *
-     * @param path the path to the file.
+     * @return the base name of file name
+     * @param path the path of the file to obtain the base name of.
+     * @since 2.16.0
+     */
+    public static String getBaseName(final Path path) {
+        if (path == null) {
+            return null;
+        }
+        final Path fileName = path.getFileName();
+        return fileName != null ? FilenameUtils.removeExtension(fileName.toString()) : null;
+    }
+
+    /**
+     * Shorthand for {@code Files.getFileAttributeView(path, DosFileAttributeView.class, options)}.
+     *
+     * @param path    the path to the file.
      * @param options how to handle symbolic links.
      * @return a DosFileAttributeView, or {@code null} if the attribute view type is not available.
      * @since 2.12.0
@@ -858,11 +886,61 @@ public final class PathUtils {
     }
 
     /**
+     * Gets the extension of a Path.
+     * <p>
+     * This method returns the textual part of the Path after the last dot.
+     * </p>
+     * <pre>
+     * foo.txt      --&gt; "txt"
+     * a/b/c.jpg    --&gt; "jpg"
+     * a/b.txt/c    --&gt; ""
+     * a/b/c        --&gt; ""
+     * </pre>
+     * <p>
+     * The output will be the same irrespective of the machine that the code is running on.
+     * </p>
+     *
+     * @param path the path to query.
+     * @return the extension of the file or an empty string if none exists or {@code null} if the fileName is {@code null}.
+     * @since 2.16.0
+     */
+    public static String getExtension(final Path path) {
+        final String fileName = getFileNameString(path);
+        return fileName != null ? FilenameUtils.getExtension(fileName) : null;
+    }
+
+    /**
+     * Gets the Path's file name and apply the given function if the file name is non-null.
+     *
+     * @param <R> The function's result type.
+     * @param path the path to query.
+     * @param function function to apply to the file name.
+     * @return the Path's file name as a string or null.
+     * @see Path#getFileName()
+     * @since 2.16.0
+     */
+    public static <R> R getFileName(final Path path, final Function<Path, R> function) {
+        final Path fileName = path != null ? path.getFileName() : null;
+        return fileName != null ? function.apply(fileName) : null;
+    }
+
+    /**
+     * Gets the Path's file name as a string.
+     *
+     * @param path the path to query.
+     * @return the Path's file name as a string or null.
+     * @see Path#getFileName()
+     * @since 2.16.0
+     */
+    public static String getFileNameString(final Path path) {
+        return getFileName(path, Path::toString);
+    }
+
+    /**
      * Gets the file's last modified time or null if the file does not exist.
      * <p>
-     * The method provides a workaround for bug <a href="https://bugs.openjdk.java.net/browse/JDK-8177809">JDK-8177809</a>
-     * where {@link File#lastModified()} looses milliseconds and always ends in 000. This bug is in OpenJDK 8 and 9, and
-     * fixed in 11.
+     * The method provides a workaround for bug <a href="https://bugs.openjdk.java.net/browse/JDK-8177809">JDK-8177809</a> where {@link File#lastModified()}
+     * looses milliseconds and always ends in 000. This bug is in OpenJDK 8 and 9, and fixed in 11.
      * </p>
      *
      * @param file the file to query.
@@ -877,9 +955,9 @@ public final class PathUtils {
     /**
      * Gets the file's last modified time or null if the file does not exist.
      *
-     * @param path the file to query.
+     * @param path            the file to query.
      * @param defaultIfAbsent Returns this file time of the file does not exist, may be null.
-     * @param options options indicating how symbolic links are handled.
+     * @param options         options indicating how symbolic links are handled.
      * @return the file's last modified time.
      * @throws IOException Thrown if an I/O error occurs.
      * @since 2.12.0
@@ -891,7 +969,7 @@ public final class PathUtils {
     /**
      * Gets the file's last modified time or null if the file does not exist.
      *
-     * @param path the file to query.
+     * @param path    the file to query.
      * @param options options indicating how symbolic links are handled.
      * @return the file's last modified time.
      * @throws IOException Thrown if an I/O error occurs.
@@ -918,9 +996,8 @@ public final class PathUtils {
      *
      * @param url the file to query.
      * @return the file's last modified time.
-     * @throws IOException Thrown if an I/O error occurs.
-     * @throws URISyntaxException if the URL is not formatted strictly according to RFC2396 and cannot be converted to a
-     *         URI.
+     * @throws IOException        Thrown if an I/O error occurs.
+     * @throws URISyntaxException if the URL is not formatted strictly according to RFC2396 and cannot be converted to a URI.
      * @since 2.12.0
      */
     public static FileTime getLastModifiedFileTime(final URL url) throws IOException, URISyntaxException {
@@ -938,7 +1015,7 @@ public final class PathUtils {
     /**
      * Shorthand for {@code Files.getFileAttributeView(path, PosixFileAttributeView.class)}.
      *
-     * @param path the path to the file.
+     * @param path    the path to the file.
      * @param options how to handle symbolic links.
      * @return a PosixFileAttributeView, or {@code null} if the attribute view type is not available.
      * @since 2.12.0
@@ -961,12 +1038,12 @@ public final class PathUtils {
      * Tests whether the given {@link Path} is a directory or not. Implemented as a null-safe delegate to
      * {@code Files.isDirectory(Path path, LinkOption... options)}.
      *
-     * @param path the path to the file.
+     * @param path    the path to the file.
      * @param options options indicating how to handle symbolic links
-     * @return {@code true} if the file is a directory; {@code false} if the path is null, the file does not exist, is not a
-     *         directory, or it cannot be determined if the file is a directory or not.
-     * @throws SecurityException In the case of the default provider, and a security manager is installed, the
-     *         {@link SecurityManager#checkRead(String) checkRead} method is invoked to check read access to the directory.
+     * @return {@code true} if the file is a directory; {@code false} if the path is null, the file does not exist, is not a directory, or it cannot be
+     *         determined if the file is a directory or not.
+     * @throws SecurityException In the case of the default provider, and a security manager is installed, the {@link SecurityManager#checkRead(String)
+     *                           checkRead} method is invoked to check read access to the directory.
      * @since 2.9.0
      */
     public static boolean isDirectory(final Path path, final LinkOption... options) {
@@ -989,11 +1066,10 @@ public final class PathUtils {
      *
      * @param directory the directory to query.
      * @return whether the directory is empty.
-     * @throws NotDirectoryException if the file could not otherwise be opened because it is not a directory <i>(optional
-     *         specific exception)</i>.
-     * @throws IOException if an I/O error occurs.
-     * @throws SecurityException In the case of the default provider, and a security manager is installed, the
-     *         {@link SecurityManager#checkRead(String) checkRead} method is invoked to check read access to the directory.
+     * @throws NotDirectoryException if the file could not otherwise be opened because it is not a directory <em>(optional specific exception)</em>.
+     * @throws IOException           if an I/O error occurs.
+     * @throws SecurityException     In the case of the default provider, and a security manager is installed, the {@link SecurityManager#checkRead(String)
+     *                               checkRead} method is invoked to check read access to the directory.
      */
     public static boolean isEmptyDirectory(final Path directory) throws IOException {
         try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(directory)) {
@@ -1006,9 +1082,9 @@ public final class PathUtils {
      *
      * @param file the file to query.
      * @return whether the file is empty.
-     * @throws IOException if an I/O error occurs.
-     * @throws SecurityException In the case of the default provider, and a security manager is installed, its
-     *         {@link SecurityManager#checkRead(String) checkRead} method denies read access to the file.
+     * @throws IOException       if an I/O error occurs.
+     * @throws SecurityException In the case of the default provider, and a security manager is installed, its {@link SecurityManager#checkRead(String)
+     *                           checkRead} method denies read access to the file.
      */
     public static boolean isEmptyFile(final Path file) throws IOException {
         return Files.size(file) <= 0;
@@ -1017,11 +1093,11 @@ public final class PathUtils {
     /**
      * Tests if the given {@link Path} is newer than the given time reference.
      *
-     * @param file the {@link Path} to test.
-     * @param czdt the time reference.
+     * @param file    the {@link Path} to test.
+     * @param czdt    the time reference.
      * @param options options indicating how to handle symbolic links.
      * @return true if the {@link Path} exists and has been modified after the given time reference.
-     * @throws IOException if an I/O error occurs.
+     * @throws IOException          if an I/O error occurs.
      * @throws NullPointerException if the file is {@code null}.
      * @since 2.12.0
      */
@@ -1033,11 +1109,11 @@ public final class PathUtils {
     /**
      * Tests if the given {@link Path} is newer than the given time reference.
      *
-     * @param file the {@link Path} to test.
+     * @param file     the {@link Path} to test.
      * @param fileTime the time reference.
-     * @param options options indicating how to handle symbolic links.
+     * @param options  options indicating how to handle symbolic links.
      * @return true if the {@link Path} exists and has been modified after the given time reference.
-     * @throws IOException if an I/O error occurs.
+     * @throws IOException          if an I/O error occurs.
      * @throws NullPointerException if the file is {@code null}.
      * @since 2.12.0
      */
@@ -1051,11 +1127,11 @@ public final class PathUtils {
     /**
      * Tests if the given {@link Path} is newer than the given time reference.
      *
-     * @param file the {@link Path} to test.
+     * @param file    the {@link Path} to test.
      * @param instant the time reference.
      * @param options options indicating how to handle symbolic links.
      * @return true if the {@link Path} exists and has been modified after the given time reference.
-     * @throws IOException if an I/O error occurs.
+     * @throws IOException          if an I/O error occurs.
      * @throws NullPointerException if the file is {@code null}.
      * @since 2.12.0
      */
@@ -1066,11 +1142,11 @@ public final class PathUtils {
     /**
      * Tests if the given {@link Path} is newer than the given time reference.
      *
-     * @param file the {@link Path} to test.
+     * @param file       the {@link Path} to test.
      * @param timeMillis the time reference measured in milliseconds since the epoch (00:00:00 GMT, January 1, 1970)
-     * @param options options indicating how to handle symbolic links.
+     * @param options    options indicating how to handle symbolic links.
      * @return true if the {@link Path} exists and has been modified after the given time reference.
-     * @throws IOException if an I/O error occurs.
+     * @throws IOException          if an I/O error occurs.
      * @throws NullPointerException if the file is {@code null}.
      * @since 2.9.0
      */
@@ -1081,7 +1157,7 @@ public final class PathUtils {
     /**
      * Tests if the given {@link Path} is newer than the reference {@link Path}.
      *
-     * @param file the {@link File} to test.
+     * @param file      the {@link File} to test.
      * @param reference the {@link File} of which the modification date is used.
      * @return true if the {@link File} exists and has been modified more recently than the reference {@link File}.
      * @throws IOException if an I/O error occurs.
@@ -1094,11 +1170,11 @@ public final class PathUtils {
     /**
      * Tests if the given {@link Path} is older than the given time reference.
      *
-     * @param file the {@link Path} to test.
+     * @param file     the {@link Path} to test.
      * @param fileTime the time reference.
-     * @param options options indicating how to handle symbolic links.
+     * @param options  options indicating how to handle symbolic links.
      * @return true if the {@link Path} exists and has been modified before the given time reference.
-     * @throws IOException if an I/O error occurs.
+     * @throws IOException          if an I/O error occurs.
      * @throws NullPointerException if the file is {@code null}.
      * @since 2.12.0
      */
@@ -1112,11 +1188,11 @@ public final class PathUtils {
     /**
      * Tests if the given {@link Path} is older than the given time reference.
      *
-     * @param file the {@link Path} to test.
+     * @param file    the {@link Path} to test.
      * @param instant the time reference.
      * @param options options indicating how to handle symbolic links.
      * @return true if the {@link Path} exists and has been modified before the given time reference.
-     * @throws IOException if an I/O error occurs.
+     * @throws IOException          if an I/O error occurs.
      * @throws NullPointerException if the file is {@code null}.
      * @since 2.12.0
      */
@@ -1127,11 +1203,11 @@ public final class PathUtils {
     /**
      * Tests if the given {@link Path} is older than the given time reference.
      *
-     * @param file the {@link Path} to test.
+     * @param file       the {@link Path} to test.
      * @param timeMillis the time reference measured in milliseconds since the epoch (00:00:00 GMT, January 1, 1970)
-     * @param options options indicating how to handle symbolic links.
+     * @param options    options indicating how to handle symbolic links.
      * @return true if the {@link Path} exists and has been modified before the given time reference.
-     * @throws IOException if an I/O error occurs.
+     * @throws IOException          if an I/O error occurs.
      * @throws NullPointerException if the file is {@code null}.
      * @since 2.12.0
      */
@@ -1142,7 +1218,7 @@ public final class PathUtils {
     /**
      * Tests if the given {@link Path} is older than the reference {@link Path}.
      *
-     * @param file the {@link File} to test.
+     * @param file      the {@link File} to test.
      * @param reference the {@link File} of which the modification date is used.
      * @return true if the {@link File} exists and has been modified before than the reference {@link File}.
      * @throws IOException if an I/O error occurs.
@@ -1155,7 +1231,7 @@ public final class PathUtils {
     /**
      * Tests whether the given path is on a POSIX file system.
      *
-     * @param test The Path to test.
+     * @param test    The Path to test.
      * @param options options indicating how to handle symbolic links.
      * @return true if test is on a POSIX file system.
      * @since 2.12.0
@@ -1168,12 +1244,12 @@ public final class PathUtils {
      * Tests whether the given {@link Path} is a regular file or not. Implemented as a null-safe delegate to
      * {@code Files.isRegularFile(Path path, LinkOption... options)}.
      *
-     * @param path the path to the file.
+     * @param path    the path to the file.
      * @param options options indicating how to handle symbolic links.
-     * @return {@code true} if the file is a regular file; {@code false} if the path is null, the file does not exist, is
-     *         not a directory, or it cannot be determined if the file is a regular file or not.
-     * @throws SecurityException In the case of the default provider, and a security manager is installed, the
-     *         {@link SecurityManager#checkRead(String) checkRead} method is invoked to check read access to the directory.
+     * @return {@code true} if the file is a regular file; {@code false} if the path is null, the file does not exist, is not a directory, or it cannot be
+     *         determined if the file is a regular file or not.
+     * @throws SecurityException In the case of the default provider, and a security manager is installed, the {@link SecurityManager#checkRead(String)
+     *                           checkRead} method is invoked to check read access to the directory.
      * @since 2.9.0
      */
     public static boolean isRegularFile(final Path path, final LinkOption... options) {
@@ -1197,10 +1273,9 @@ public final class PathUtils {
     }
 
     /**
-     * Creates a new OutputStream by opening or creating a file, returning an output stream that may be used to write bytes
-     * to the file.
+     * Creates a new OutputStream by opening or creating a file, returning an output stream that may be used to write bytes to the file.
      *
-     * @param path the Path.
+     * @param path   the Path.
      * @param append Whether or not to append.
      * @return a new OutputStream.
      * @throws IOException if an I/O error occurs.
@@ -1249,9 +1324,9 @@ public final class PathUtils {
     /**
      * Reads the BasicFileAttributes from the given path. Returns null if the attributes can't be read.
      *
-     * @param <A> The {@link BasicFileAttributes} type
-     * @param path The Path to test.
-     * @param type the {@link Class} of the file attributes required to read.
+     * @param <A>     The {@link BasicFileAttributes} type
+     * @param path    The Path to test.
+     * @param type    the {@link Class} of the file attributes required to read.
      * @param options options indicating how to handle symbolic links.
      * @return the file attributes or null if the attributes can't be read.
      * @see Files#readAttributes(Path, Class, LinkOption...)
@@ -1279,10 +1354,9 @@ public final class PathUtils {
     }
 
     /**
-     * Reads the BasicFileAttributes from the given path. Returns null if the attributes
-     * can't be read.
+     * Reads the BasicFileAttributes from the given path. Returns null if the attributes can't be read.
      *
-     * @param path the path to read.
+     * @param path    the path to read.
      * @param options options indicating how to handle symbolic links.
      * @return the path attributes.
      * @since 2.12.0
@@ -1292,8 +1366,7 @@ public final class PathUtils {
     }
 
     /**
-     * Reads the BasicFileAttributes from the given path. Returns null if the attributes
-     * can't be read.
+     * Reads the BasicFileAttributes from the given path. Returns null if the attributes can't be read.
      *
      * @param path the path to read.
      * @return the path attributes.
@@ -1306,10 +1379,9 @@ public final class PathUtils {
     }
 
     /**
-     * Reads the DosFileAttributes from the given path. Returns null if the attributes
-     * can't be read.
+     * Reads the DosFileAttributes from the given path. Returns null if the attributes can't be read.
      *
-     * @param path the path to read.
+     * @param path    the path to read.
      * @param options options indicating how to handle symbolic links.
      * @return the path attributes.
      * @since 2.12.0
@@ -1323,10 +1395,9 @@ public final class PathUtils {
     }
 
     /**
-     * Reads the PosixFileAttributes or DosFileAttributes from the given path. Returns null if the attributes
-     * can't be read.
+     * Reads the PosixFileAttributes or DosFileAttributes from the given path. Returns null if the attributes can't be read.
      *
-     * @param path The Path to read.
+     * @param path    The Path to read.
      * @param options options indicating how to handle symbolic links.
      * @return the file attributes.
      * @since 2.12.0
@@ -1337,10 +1408,9 @@ public final class PathUtils {
     }
 
     /**
-     * Reads the PosixFileAttributes from the given path. Returns null instead of throwing
-     * {@link UnsupportedOperationException}.
+     * Reads the PosixFileAttributes from the given path. Returns null instead of throwing {@link UnsupportedOperationException}.
      *
-     * @param path The Path to read.
+     * @param path    The Path to read.
      * @param options options indicating how to handle symbolic links.
      * @return the file attributes.
      * @since 2.12.0
@@ -1350,13 +1420,14 @@ public final class PathUtils {
     }
 
     /**
-     * Reads the given path as a String.
+     * Reads the file contents at the given path as a String using the Charset.
      *
-     * @param path The source path.
+     * @param path    The source path.
      * @param charset How to convert bytes to a String, null uses the default Charset.
-     * @return a new String.
+     * @return the file contents as a new String.
      * @throws IOException if an I/O error occurs reading from the stream.
      * @see Files#readAllBytes(Path)
+     * @see Charsets#toCharset(Charset)
      * @since 2.12.0
      */
     public static String readString(final Path path, final Charset charset) throws IOException {
@@ -1367,8 +1438,8 @@ public final class PathUtils {
      * Relativizes all files in the given {@code collection} against a {@code parent}.
      *
      * @param collection The collection of paths to relativize.
-     * @param parent relativizes against this parent path.
-     * @param sort Whether to sort the result.
+     * @param parent     relativizes against this parent path.
+     * @param sort       Whether to sort the result.
      * @param comparator How to sort.
      * @return A collection of relativized paths, optionally sorted.
      */
@@ -1383,11 +1454,11 @@ public final class PathUtils {
     /**
      * Requires that the given {@link File} exists and throws an {@link IllegalArgumentException} if it doesn't.
      *
-     * @param file The {@link File} to check.
+     * @param file          The {@link File} to check.
      * @param fileParamName The parameter name to use in the exception message in case of {@code null} input.
-     * @param options options indicating how to handle symbolic links.
+     * @param options       options indicating how to handle symbolic links.
      * @return the given file.
-     * @throws NullPointerException if the given {@link File} is {@code null}.
+     * @throws NullPointerException     if the given {@link File} is {@code null}.
      * @throws IllegalArgumentException if the given {@link File} does not exist.
      */
     private static Path requireExists(final Path file, final String fileParamName, final LinkOption... options) {
@@ -1414,7 +1485,7 @@ public final class PathUtils {
      * @param targetFile The target path to set.
      * @throws NullPointerException if sourceFile is {@code null}.
      * @throws NullPointerException if targetFile is {@code null}.
-     * @throws IOException if setting the last-modified time failed.
+     * @throws IOException          if setting the last-modified time failed.
      * @since 2.12.0
      */
     public static void setLastModifiedTime(final Path sourceFile, final Path targetFile) throws IOException {
@@ -1425,14 +1496,14 @@ public final class PathUtils {
     /**
      * To delete a file in POSIX, you need Write and Execute permissions on its parent directory.
      *
-     * @param parent The parent path for a file element to delete which needs RW permissions.
+     * @param parent               The parent path for a file element to delete which needs RW permissions.
      * @param enableDeleteChildren true to set permissions to delete.
-     * @param linkOptions options indicating how handle symbolic links.
+     * @param linkOptions          options indicating how handle symbolic links.
      * @return true if the operation was attempted and succeeded, false if parent is null.
      * @throws IOException if an I/O error occurs.
      */
     private static boolean setPosixDeletePermissions(final Path parent, final boolean enableDeleteChildren, final LinkOption... linkOptions)
-        throws IOException {
+            throws IOException {
         // To delete a file in POSIX, you need write and execute permissions on its parent directory.
         // @formatter:off
         return setPosixPermissions(parent, enableDeleteChildren, Arrays.asList(
@@ -1448,24 +1519,30 @@ public final class PathUtils {
 
     /**
      * Low-level POSIX permission operation to set permissions.
+     * <p>
+     * If the permissions to update are already set, then make no additional calls.
+     * </p>
      *
-     * @param path Set this path's permissions.
-     * @param addPermissions true to add, false to remove.
+     * @param path              Set this path's permissions.
+     * @param addPermissions    true to add, false to remove.
      * @param updatePermissions the List of PosixFilePermission to add or remove.
-     * @param linkOptions options indicating how handle symbolic links.
+     * @param linkOptions       options indicating how handle symbolic links.
      * @return true if the operation was attempted and succeeded, false if parent is null.
      * @throws IOException if an I/O error occurs.
      */
     private static boolean setPosixPermissions(final Path path, final boolean addPermissions, final List<PosixFilePermission> updatePermissions,
-        final LinkOption... linkOptions) throws IOException {
+            final LinkOption... linkOptions) throws IOException {
         if (path != null) {
             final Set<PosixFilePermission> permissions = Files.getPosixFilePermissions(path, linkOptions);
+            final Set<PosixFilePermission> newPermissions = new HashSet<>(permissions);
             if (addPermissions) {
-                permissions.addAll(updatePermissions);
+                newPermissions.addAll(updatePermissions);
             } else {
-                permissions.removeAll(updatePermissions);
+                newPermissions.removeAll(updatePermissions);
             }
-            Files.setPosixFilePermissions(path, permissions);
+            if (!newPermissions.equals(permissions)) {
+                Files.setPosixFilePermissions(path, newPermissions);
+            }
             return true;
         }
         return false;
@@ -1504,8 +1581,8 @@ public final class PathUtils {
      * This behavior is OS dependent.
      * </p>
      *
-     * @param path The path to set.
-     * @param readOnly true for read-only, false for not read-only.
+     * @param path        The path to set.
+     * @param readOnly    true for read-only, false for not read-only.
      * @param linkOptions options indicating how to handle symbolic links.
      * @return The given path.
      * @throws IOException if an I/O error occurs.
@@ -1522,7 +1599,7 @@ public final class PathUtils {
         }
         final Path parent = getParent(path);
         if (!isPosix(parent, linkOptions)) { // Test parent because we may not the permissions to test the file.
-            throw new IOException(String.format("DOS or POSIX file operations not available for '%s' %s", path, Arrays.toString(linkOptions)));
+            throw new IOException(String.format("DOS or POSIX file operations not available for '%s', linkOptions %s", path, Arrays.toString(linkOptions)));
         }
         // POSIX
         if (readOnly) {
@@ -1539,18 +1616,18 @@ public final class PathUtils {
     }
 
     /**
-     * Returns the size of the given file or directory. If the provided {@link Path} is a regular file, then the file's size
-     * is returned. If the argument is a directory, then the size of the directory is calculated recursively.
+     * Returns the size of the given file or directory. If the provided {@link Path} is a regular file, then the file's size is returned. If the argument is a
+     * directory, then the size of the directory is calculated recursively.
      * <p>
-     * Note that overflow is not detected, and the return value may be negative if overflow occurs. See
-     * {@link #sizeOfAsBigInteger(Path)} for an alternative method that does not overflow.
+     * Note that overflow is not detected, and the return value may be negative if overflow occurs. See {@link #sizeOfAsBigInteger(Path)} for an alternative
+     * method that does not overflow.
      * </p>
      *
      * @param path the regular file or directory to return the size of, must not be {@code null}.
      * @return the length of the file, or recursive size of the directory, in bytes.
-     * @throws NullPointerException if the file is {@code null}.
+     * @throws NullPointerException     if the file is {@code null}.
      * @throws IllegalArgumentException if the file does not exist.
-     * @throws IOException if an I/O error occurs.
+     * @throws IOException              if an I/O error occurs.
      * @since 2.12.0
      */
     public static long sizeOf(final Path path) throws IOException {
@@ -1559,14 +1636,14 @@ public final class PathUtils {
     }
 
     /**
-     * Returns the size of the given file or directory. If the provided {@link Path} is a regular file, then the file's size
-     * is returned. If the argument is a directory, then the size of the directory is calculated recursively.
+     * Returns the size of the given file or directory. If the provided {@link Path} is a regular file, then the file's size is returned. If the argument is a
+     * directory, then the size of the directory is calculated recursively.
      *
      * @param path the regular file or directory to return the size of (must not be {@code null}).
      * @return the length of the file, or recursive size of the directory, provided (in bytes).
-     * @throws NullPointerException if the file is {@code null}.
+     * @throws NullPointerException     if the file is {@code null}.
      * @throws IllegalArgumentException if the file does not exist.
-     * @throws IOException if an I/O error occurs.
+     * @throws IOException              if an I/O error occurs.
      * @since 2.12.0
      */
     public static BigInteger sizeOfAsBigInteger(final Path path) throws IOException {
@@ -1577,15 +1654,14 @@ public final class PathUtils {
     /**
      * Counts the size of a directory recursively (sum of the size of all files).
      * <p>
-     * Note that overflow is not detected, and the return value may be negative if overflow occurs. See
-     * {@link #sizeOfDirectoryAsBigInteger(Path)} for an alternative method that does not overflow.
+     * Note that overflow is not detected, and the return value may be negative if overflow occurs. See {@link #sizeOfDirectoryAsBigInteger(Path)} for an
+     * alternative method that does not overflow.
      * </p>
      *
      * @param directory directory to inspect, must not be {@code null}.
-     * @return size of directory in bytes, 0 if directory is security restricted, a negative number when the real total is
-     *         greater than {@link Long#MAX_VALUE}.
+     * @return size of directory in bytes, 0 if directory is security restricted, a negative number when the real total is greater than {@link Long#MAX_VALUE}.
      * @throws NullPointerException if the directory is {@code null}.
-     * @throws IOException if an I/O error occurs.
+     * @throws IOException          if an I/O error occurs.
      * @since 2.12.0
      */
     public static long sizeOfDirectory(final Path directory) throws IOException {
@@ -1598,7 +1674,7 @@ public final class PathUtils {
      * @param directory directory to inspect, must not be {@code null}.
      * @return size of directory in bytes, 0 if directory is security restricted.
      * @throws NullPointerException if the directory is {@code null}.
-     * @throws IOException if an I/O error occurs.
+     * @throws IOException          if an I/O error occurs.
      * @since 2.12.0
      */
     public static BigInteger sizeOfDirectoryAsBigInteger(final Path directory) throws IOException {
@@ -1616,13 +1692,13 @@ public final class PathUtils {
     }
 
     /**
-     * Implements behavior similar to the Unix "touch" utility. Creates a new file with size 0, or, if the file exists, just
-     * updates the file's modified time. this method creates parent directories if they do not exist.
+     * Implements behavior similar to the UNIX "touch" utility. Creates a new file with size 0, or, if the file exists, just updates the file's modified time.
+     * this method creates parent directories if they do not exist.
      *
      * @param file the file to touch.
      * @return The given file.
      * @throws NullPointerException if the parameter is {@code null}.
-     * @throws IOException if setting the last-modified time failed or an I/O problem occurs.\
+     * @throws IOException          if setting the last-modified time failed or an I/O problem occurs.\
      * @since 2.12.0
      */
     public static Path touch(final Path file) throws IOException {
@@ -1641,13 +1717,13 @@ public final class PathUtils {
      *
      * Note that {@link Files#walkFileTree(Path,FileVisitor)} returns the given path.
      *
-     * @param visitor See {@link Files#walkFileTree(Path,FileVisitor)}.
+     * @param visitor   See {@link Files#walkFileTree(Path,FileVisitor)}.
      * @param directory See {@link Files#walkFileTree(Path,FileVisitor)}.
-     * @param <T> See {@link Files#walkFileTree(Path,FileVisitor)}.
+     * @param <T>       See {@link Files#walkFileTree(Path,FileVisitor)}.
      * @return the given visitor.
      *
-     * @throws NoSuchFileException if the directory does not exist.
-     * @throws IOException if an I/O error is thrown by a visitor method.
+     * @throws NoSuchFileException  if the directory does not exist.
+     * @throws IOException          if an I/O error is thrown by a visitor method.
      * @throws NullPointerException if the directory is {@code null}.
      */
     public static <T extends FileVisitor<? super Path>> T visitFileTree(final T visitor, final Path directory) throws IOException {
@@ -1660,17 +1736,17 @@ public final class PathUtils {
      *
      * Note that {@link Files#walkFileTree(Path,FileVisitor)} returns the given path.
      *
-     * @param start See {@link Files#walkFileTree(Path,Set,int,FileVisitor)}.
-     * @param options See {@link Files#walkFileTree(Path,Set,int,FileVisitor)}.
+     * @param start    See {@link Files#walkFileTree(Path,Set,int,FileVisitor)}.
+     * @param options  See {@link Files#walkFileTree(Path,Set,int,FileVisitor)}.
      * @param maxDepth See {@link Files#walkFileTree(Path,Set,int,FileVisitor)}.
-     * @param visitor See {@link Files#walkFileTree(Path,Set,int,FileVisitor)}.
-     * @param <T> See {@link Files#walkFileTree(Path,Set,int,FileVisitor)}.
+     * @param visitor  See {@link Files#walkFileTree(Path,Set,int,FileVisitor)}.
+     * @param <T>      See {@link Files#walkFileTree(Path,Set,int,FileVisitor)}.
      * @return the given visitor.
      *
      * @throws IOException if an I/O error is thrown by a visitor method.
      */
     public static <T extends FileVisitor<? super Path>> T visitFileTree(final T visitor, final Path start, final Set<FileVisitOption> options,
-        final int maxDepth) throws IOException {
+            final int maxDepth) throws IOException {
         Files.walkFileTree(start, options, maxDepth, visitor);
         return visitor;
     }
@@ -1681,9 +1757,9 @@ public final class PathUtils {
      * Note that {@link Files#walkFileTree(Path,FileVisitor)} returns the given path.
      *
      * @param visitor See {@link Files#walkFileTree(Path,FileVisitor)}.
-     * @param first See {@link Paths#get(String,String[])}.
-     * @param more See {@link Paths#get(String,String[])}.
-     * @param <T> See {@link Files#walkFileTree(Path,FileVisitor)}.
+     * @param first   See {@link Paths#get(String,String[])}.
+     * @param more    See {@link Paths#get(String,String[])}.
+     * @param <T>     See {@link Files#walkFileTree(Path,FileVisitor)}.
      * @return the given visitor.
      *
      * @throws IOException if an I/O error is thrown by a visitor method.
@@ -1698,8 +1774,8 @@ public final class PathUtils {
      * Note that {@link Files#walkFileTree(Path,FileVisitor)} returns the given path.
      *
      * @param visitor See {@link Files#walkFileTree(Path,FileVisitor)}.
-     * @param uri See {@link Paths#get(URI)}.
-     * @param <T> See {@link Files#walkFileTree(Path,FileVisitor)}.
+     * @param uri     See {@link Paths#get(URI)}.
+     * @param <T>     See {@link Files#walkFileTree(Path,FileVisitor)}.
      * @return the given visitor.
      *
      * @throws IOException if an I/O error is thrown by a visitor method.
@@ -1709,13 +1785,12 @@ public final class PathUtils {
     }
 
     /**
-     * Waits for the file system to propagate a file creation, with a timeout.
+     * Waits for the file system to detect a file's presence, with a timeout.
      * <p>
-     * This method repeatedly tests {@link Files#exists(Path,LinkOption...)} until it returns true up to the maximum time
-     * given.
+     * This method repeatedly tests {@link Files#exists(Path,LinkOption...)} until it returns true up to the maximum time given.
      * </p>
      *
-     * @param file the file to check, must not be {@code null}.
+     * @param file    the file to check, must not be {@code null}.
      * @param timeout the maximum time to wait.
      * @param options options indicating how to handle symbolic links.
      * @return true if file exists.
@@ -1757,23 +1832,24 @@ public final class PathUtils {
      * closed stream causes a {@link IllegalStateException}.
      * </p>
      *
-     * @param start the start path
-     * @param pathFilter the path filter
-     * @param maxDepth the maximum depth of directories to walk.
+     * @param start          the start path
+     * @param pathFilter     the path filter
+     * @param maxDepth       the maximum depth of directories to walk.
      * @param readAttributes whether to call the filters with file attributes (false passes null).
-     * @param options the options to configure the walk.
+     * @param options        the options to configure the walk.
      * @return a filtered stream of paths.
      * @throws IOException if an I/O error is thrown when accessing the starting file.
      * @since 2.9.0
      */
+    @SuppressWarnings("resource") // Caller closes
     public static Stream<Path> walk(final Path start, final PathFilter pathFilter, final int maxDepth, final boolean readAttributes,
-        final FileVisitOption... options) throws IOException {
+            final FileVisitOption... options) throws IOException {
         return Files.walk(start, maxDepth, options)
-            .filter(path -> pathFilter.accept(path, readAttributes ? readBasicFileAttributesUnchecked(path) : null) == FileVisitResult.CONTINUE);
+                .filter(path -> pathFilter.accept(path, readAttributes ? readBasicFileAttributesUnchecked(path) : null) == FileVisitResult.CONTINUE);
     }
 
     private static <R> R withPosixFileAttributes(final Path path, final LinkOption[] linkOptions, final boolean overrideReadOnly,
-        final IOFunction<PosixFileAttributes, R> function) throws IOException {
+            final IOFunction<PosixFileAttributes, R> function) throws IOException {
         final PosixFileAttributes posixFileAttributes = overrideReadOnly ? readPosixFileAttributes(path, linkOptions) : null;
         try {
             return function.apply(posixFileAttributes);
@@ -1787,17 +1863,17 @@ public final class PathUtils {
     /**
      * Writes the given character sequence to a file at the given path.
      *
-     * @param path The target file.
+     * @param path         The target file.
      * @param charSequence The character sequence text.
-     * @param charset The Charset to encode the text.
-     * @param openOptions options How to open the file.
+     * @param charset      The Charset to encode the text.
+     * @param openOptions  options How to open the file.
      * @return The given path.
-     * @throws IOException if an I/O error occurs writing to or creating the file.
+     * @throws IOException          if an I/O error occurs writing to or creating the file.
      * @throws NullPointerException if either {@code path} or {@code charSequence} is {@code null}.
      * @since 2.12.0
      */
     public static Path writeString(final Path path, final CharSequence charSequence, final Charset charset, final OpenOption... openOptions)
-        throws IOException {
+            throws IOException {
         // Check the text is not null before opening file.
         Objects.requireNonNull(path, "path");
         Objects.requireNonNull(charSequence, "charSequence");

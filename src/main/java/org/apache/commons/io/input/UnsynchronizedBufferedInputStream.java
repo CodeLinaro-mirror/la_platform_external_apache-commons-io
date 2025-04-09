@@ -32,7 +32,7 @@ import org.apache.commons.io.build.AbstractStreamBuilder;
  * takes place when filling that buffer, but this is usually outweighed by the performance benefits.
  * </p>
  * <p>
- * To build an instance, see {@link Builder}.
+ * To build an instance, use {@link Builder}.
  * </p>
  * <p>
  * A typical application pattern for the class looks like this:
@@ -48,14 +48,17 @@ import org.apache.commons.io.build.AbstractStreamBuilder;
  * Provenance: Apache Harmony and modified.
  * </p>
  *
+ * @see Builder
  * @see BufferedInputStream
  * @since 2.12.0
  */
 //@NotThreadSafe
 public final class UnsynchronizedBufferedInputStream extends UnsynchronizedFilterInputStream {
 
+    // @formatter:off
     /**
-     * Builds a new {@link UnsynchronizedBufferedInputStream} instance.
+     * Builds a new {@link UnsynchronizedBufferedInputStream}.
+     *
      * <p>
      * Using File IO:
      * </p>
@@ -74,22 +77,31 @@ public final class UnsynchronizedBufferedInputStream extends UnsynchronizedFilte
      *   .setBufferSize(8192)
      *   .get();}
      * </pre>
+     *
+     * @see #get()
      */
+    // @formatter:on
     public static class Builder extends AbstractStreamBuilder<UnsynchronizedBufferedInputStream, Builder> {
 
         /**
-         * Constructs a new instance.
+         * Builds a new {@link UnsynchronizedBufferedInputStream}.
          * <p>
-         * This builder use the aspects InputStream, OpenOption[] and buffer size.
+         * You must set input that supports {@link #getInputStream()} on this builder, otherwise, this method throws an exception.
          * </p>
          * <p>
-         * You must provide an origin that can be converted to an InputStream by this builder, otherwise, this call will throw an
-         * {@link UnsupportedOperationException}.
+         * This builder use the following aspects:
          * </p>
+         * <ul>
+         * <li>{@link #getInputStream()}</li>
+         * <li>{@link #getBufferSize()}</li>
+         * </ul>
          *
          * @return a new instance.
-         * @throws UnsupportedOperationException if the origin cannot provide an InputStream.
+         * @throws IllegalStateException         if the {@code origin} is {@code null}.
+         * @throws UnsupportedOperationException if the origin cannot be converted to an {@link InputStream}.
+         * @throws IOException                   if an I/O error occurs.
          * @see #getInputStream()
+         * @see #getBufferSize()
          */
         @SuppressWarnings("resource") // Caller closes.
         @Override
@@ -173,7 +185,7 @@ public final class UnsynchronizedBufferedInputStream extends UnsynchronizedFilte
 
     private int fillBuffer(final InputStream localIn, byte[] localBuf) throws IOException {
         if (markPos == IOUtils.EOF || pos - markPos >= markLimit) {
-            /* Mark position not set or exceeded readlimit */
+            /* Mark position not set or exceeded readLimit */
             final int result = localIn.read(localBuf);
             if (result > 0) {
                 markPos = IOUtils.EOF;
@@ -183,7 +195,7 @@ public final class UnsynchronizedBufferedInputStream extends UnsynchronizedFilte
             return result;
         }
         if (markPos == 0 && markLimit > localBuf.length) {
-            /* Increase buffer size to accommodate the readlimit */
+            /* Increase buffer size to accommodate the readLimit */
             int newLength = localBuf.length * 2;
             if (newLength > markLimit) {
                 newLength = markLimit;
@@ -196,7 +208,7 @@ public final class UnsynchronizedBufferedInputStream extends UnsynchronizedFilte
         } else if (markPos > 0) {
             System.arraycopy(localBuf, markPos, localBuf, 0, localBuf.length - markPos);
         }
-        /* Set the new position and mark position */
+        // Set the new position and mark position
         pos -= markPos;
         count = markPos = 0;
         final int bytesread = localIn.read(localBuf, pos, localBuf.length - pos);
@@ -209,16 +221,16 @@ public final class UnsynchronizedBufferedInputStream extends UnsynchronizedFilte
     }
 
     /**
-     * Sets a mark position in this stream. The parameter {@code readlimit} indicates how many bytes can be read before a mark is invalidated. Calling
-     * {@code reset()} will reposition the stream back to the marked position if {@code readlimit} has not been surpassed. The underlying buffer may be
-     * increased in size to allow {@code readlimit} number of bytes to be supported.
+     * Sets a mark position in this stream. The parameter {@code readLimit} indicates how many bytes can be read before a mark is invalidated. Calling
+     * {@code reset()} will reposition the stream back to the marked position if {@code readLimit} has not been surpassed. The underlying buffer may be
+     * increased in size to allow {@code readLimit} number of bytes to be supported.
      *
-     * @param readlimit the number of bytes that can be read before the mark is invalidated.
+     * @param readLimit the number of bytes that can be read before the mark is invalidated.
      * @see #reset()
      */
     @Override
-    public void mark(final int readlimit) {
-        markLimit = readlimit;
+    public void mark(final int readLimit) {
+        markLimit = readLimit;
         markPos = pos;
     }
 
@@ -358,7 +370,7 @@ public final class UnsynchronizedBufferedInputStream extends UnsynchronizedFilte
     /**
      * Resets this stream to the last marked location.
      *
-     * @throws IOException if this stream is closed, no mark has been set or the mark is no longer valid because more than {@code readlimit} bytes have been
+     * @throws IOException if this stream is closed, no mark has been set or the mark is no longer valid because more than {@code readLimit} bytes have been
      *                     read since setting the mark.
      * @see #mark(int)
      */

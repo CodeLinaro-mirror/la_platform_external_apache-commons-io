@@ -41,8 +41,7 @@ import org.junit.jupiter.api.Test;
 public class FileAlterationMonitorTest extends AbstractMonitorTest {
 
     /**
-     * Construct a new test case.
-     *
+     * Constructs a new test case.
      */
     public FileAlterationMonitorTest() {
         listener = new CollectionFileListener(false);

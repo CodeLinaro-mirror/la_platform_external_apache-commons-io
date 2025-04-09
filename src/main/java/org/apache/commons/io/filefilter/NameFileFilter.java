@@ -26,6 +26,7 @@ import java.util.Objects;
 import java.util.stream.Stream;
 
 import org.apache.commons.io.IOCase;
+import org.apache.commons.io.file.PathUtils;
 
 /**
  * Filters file names for a certain name.
@@ -47,15 +48,15 @@ import org.apache.commons.io.IOCase;
  * final Path dir = PathUtils.current();
  * final AccumulatorPathVisitor visitor = AccumulatorPathVisitor.withLongCounters(new NameFileFilter("Test"));
  * //
- * // Walk one dir
- * Files.<b>walkFileTree</b>(dir, Collections.emptySet(), 1, visitor);
+ * // Walk one directory
+ * Files.<strong>walkFileTree</strong>(dir, Collections.emptySet(), 1, visitor);
  * System.out.println(visitor.getPathCounters());
  * System.out.println(visitor.getFileList());
  * //
  * visitor.getPathCounters().reset();
  * //
- * // Walk dir tree
- * Files.<b>walkFileTree</b>(dir, visitor);
+ * // Walk directory tree
+ * Files.<strong>walkFileTree</strong>(dir, visitor);
  * System.out.println(visitor.getPathCounters());
  * System.out.println(visitor.getDirList());
  * System.out.println(visitor.getFileList());
@@ -162,7 +163,7 @@ public class NameFileFilter extends AbstractFileFilter implements Serializable {
      */
     @Override
     public boolean accept(final File file) {
-        return acceptBaseName(file.getName());
+        return file != null && acceptBaseName(file.getName());
     }
 
     /**
@@ -179,14 +180,15 @@ public class NameFileFilter extends AbstractFileFilter implements Serializable {
 
     /**
      * Checks to see if the file name matches.
-     * @param file  the File to check
      *
+     * @param path  the File to check
+     * @param attributes the path's basic attributes (may be null).
      * @return true if the file name matches
      * @since 2.9.0
      */
     @Override
-    public FileVisitResult accept(final Path file, final BasicFileAttributes attributes) {
-        return toFileVisitResult(acceptBaseName(Objects.toString(file.getFileName(), null)));
+    public FileVisitResult accept(final Path path, final BasicFileAttributes attributes) {
+        return toFileVisitResult(acceptBaseName(PathUtils.getFileNameString(path)));
     }
 
     private boolean acceptBaseName(final String baseName) {

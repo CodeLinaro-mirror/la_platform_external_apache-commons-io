@@ -25,13 +25,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-
 /**
  * Tests {@link FileUtils}.
  */
 public class FileUtilsCopyToFileTest {
 
-    private class CheckingInputStream extends ByteArrayInputStream {
+    private final class CheckingInputStream extends ByteArrayInputStream {
         private boolean closed;
 
         public CheckingInputStream(final byte[] data) {
@@ -77,7 +76,7 @@ public class FileUtilsCopyToFileTest {
      */
     @Test
     public void testCopyInputStreamToFile() throws IOException {
-        try(CheckingInputStream inputStream = new CheckingInputStream(testData)) {
+        try (CheckingInputStream inputStream = new CheckingInputStream(testData)) {
             FileUtils.copyInputStreamToFile(inputStream, testFile);
             assertTrue(inputStream.isClosed(), "inputStream should be closed");
         }
@@ -92,7 +91,7 @@ public class FileUtilsCopyToFileTest {
      */
     @Test
     public void testCopyToFile() throws IOException {
-        try(CheckingInputStream inputStream = new CheckingInputStream(testData)) {
+        try (CheckingInputStream inputStream = new CheckingInputStream(testData)) {
             FileUtils.copyToFile(inputStream, testFile);
             assertFalse(inputStream.isClosed(), "inputStream should NOT be closed");
         }

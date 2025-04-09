@@ -21,14 +21,45 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
 /**
- * Tests the CountingInputStream.
+ * Tests {@link CountingInputStream}.
  */
 public class CountingInputStreamTest {
+
+    @SuppressWarnings("resource")
+    @ParameterizedTest
+    @MethodSource(AbstractInputStreamTest.ARRAY_LENGTHS_NAME)
+    public void testAvailableAfterClose(final int len) throws Exception {
+        final ByteArrayInputStream bais = new ByteArrayInputStream(new byte[len]);
+        final InputStream shadow;
+        try (InputStream in = CloseShieldInputStream.wrap(bais)) {
+            assertEquals(len, in.available());
+            shadow = in;
+        }
+        assertEquals(0, shadow.available());
+    }
+
+    @ParameterizedTest
+    @MethodSource(AbstractInputStreamTest.ARRAY_LENGTHS_NAME)
+    public void testAvailableAfterOpen(final int len) throws Exception {
+        final ByteArrayInputStream bais = new ByteArrayInputStream(new byte[len]);
+        try (InputStream in = CloseShieldInputStream.wrap(bais)) {
+            assertEquals(len, in.available());
+        }
+    }
+
+    @SuppressWarnings({ "resource", "deprecation" })
+    @Test
+    public void testCloseHandleIOException() throws IOException {
+        ProxyInputStreamTest.testCloseHandleIOException(new CountingInputStream(new BrokenInputStream((Throwable) new IOException())));
+    }
 
     @Test
     public void testCounting() throws Exception {
@@ -61,7 +92,6 @@ public class CountingInputStreamTest {
             assertEquals(textResult, text);
         }
     }
-
 
     @Test
     public void testEOF1() throws Exception {
@@ -120,12 +150,25 @@ public class CountingInputStreamTest {
         assertThrows(ArithmeticException.class, () -> cis.getCount());
         assertThrows(ArithmeticException.class, () -> cis.resetCount());
 
-        mock.close();
+        mock.init();
 
         // Test long methods
         IOUtils.consume(cis);
         assertEquals(size, cis.getByteCount(), "getByteCount()");
         assertEquals(size, cis.resetByteCount(), "resetByteCount()");
+    }
+
+    @SuppressWarnings("resource")
+    @ParameterizedTest
+    @MethodSource(AbstractInputStreamTest.ARRAY_LENGTHS_NAME)
+    public void testReadAfterClose(final int len) throws Exception {
+        final ByteArrayInputStream bais = new ByteArrayInputStream(new byte[len]);
+        final InputStream shadow;
+        try (InputStream in = CloseShieldInputStream.wrap(bais)) {
+            assertEquals(len, in.available());
+            shadow = in;
+        }
+        assertEquals(IOUtils.EOF, shadow.read());
     }
 
     @Test
@@ -154,7 +197,7 @@ public class CountingInputStreamTest {
             assertEquals(6, cis.skip(6));
             assertEquals(6, cis.getCount());
             final byte[] result = new byte[6];
-            cis.read(result);
+            assertEquals(result.length, cis.read(result));
 
             assertEquals("World!", new String(result));
             assertEquals(12, cis.getCount());

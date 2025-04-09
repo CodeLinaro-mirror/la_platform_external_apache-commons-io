@@ -16,11 +16,16 @@
  */
 package org.apache.commons.io.input;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.channels.FileChannel;
 import java.nio.file.StandardOpenOption;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
  * Tests functionality of {@link BufferedFileChannelInputStream}.
@@ -43,7 +48,32 @@ public class BufferedFileChannelInputStreamTest extends AbstractInputStreamTest 
             BufferedFileChannelInputStream.builder().setPath(inputFile).setBufferSize(123).get(), // small, unaligned buffer size
             BufferedFileChannelInputStream.builder().setURI(inputFile.toUri()).setBufferSize(1024).get(), // URI and buffer size
             BufferedFileChannelInputStream.builder().setPath(inputFile).setOpenOptions(StandardOpenOption.READ).get(), // open options
+            BufferedFileChannelInputStream.builder().setFileChannel(FileChannel.open(inputFile)).get(), // FileChannel
         };
         //@formatter:on
     }
+
+    @Override
+    @Test
+    public void testAvailableAfterOpen() throws Exception {
+        for (final InputStream inputStream : inputStreams) {
+            assertTrue(inputStream.available() > 0);
+        }
+    }
+
+    @Test
+    public void testBuilderGet() {
+        // java.lang.IllegalStateException: origin == null
+        assertThrows(IllegalStateException.class, () -> BufferedFileChannelInputStream.builder().get());
+    }
+
+    @Test
+    public void testReadAfterClose() throws Exception {
+        for (final InputStream inputStream : inputStreams) {
+            inputStream.close();
+            assertThrows(IOException.class, inputStream::read);
+        }
+    }
+
+
 }
