@@ -38,8 +38,14 @@ import java.util.Objects;
 public class CharSequenceReader extends Reader implements Serializable {
 
     private static final long serialVersionUID = 3724187752191401220L;
+
+    /** Source for reading. */
     private final CharSequence charSequence;
+
+    /** Reading index. */
     private int idx;
+
+    /** Reader mark. */
     private int mark;
 
     /**
@@ -237,7 +243,7 @@ public class CharSequenceReader extends Reader implements Serializable {
             if (c == EOF) {
                 return count;
             }
-            array[offset + i] = (char)c;
+            array[offset + i] = (char) c;
             count++;
         }
         return count;
@@ -292,14 +298,13 @@ public class CharSequenceReader extends Reader implements Serializable {
     }
 
     /**
-     * Return a String representation of the underlying
+     * Gets a String representation of the underlying
      * character sequence.
      *
      * @return The contents of the character sequence
      */
     @Override
     public String toString() {
-        final CharSequence subSequence = charSequence.subSequence(start(), end());
-        return subSequence.toString();
+        return charSequence.subSequence(start(), end()).toString();
     }
 }

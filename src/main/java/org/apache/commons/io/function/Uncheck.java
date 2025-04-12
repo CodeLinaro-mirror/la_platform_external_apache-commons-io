@@ -63,6 +63,22 @@ public final class Uncheck {
     }
 
     /**
+     * Accepts an IO consumer with the given argument.
+     *
+     * @param i the input argument.
+     * @param consumer Consumes the value.
+     * @throws UncheckedIOException if an I/O error occurs.
+     * @since 2.18.0
+     */
+    public static void accept(final IOIntConsumer consumer, final int i) {
+        try {
+            consumer.accept(i);
+        } catch (final IOException e) {
+            throw wrap(e);
+        }
+    }
+
+    /**
      * Accepts an IO consumer with the given arguments.
      *
      * @param <T> the first input type.
@@ -330,7 +346,7 @@ public final class Uncheck {
     }
 
     /**
-     * Constructs a new UncheckedIOException for the given exception.
+     * Constructs a new {@link UncheckedIOException} for the given exception.
      *
      * @param e The exception to wrap.
      * @return a new {@link UncheckedIOException}.
@@ -340,7 +356,7 @@ public final class Uncheck {
     }
 
     /**
-     * Constructs a new UncheckedIOException for the given exception and detail message.
+     * Constructs a new {@link UncheckedIOException} for the given exception and detail message.
      *
      * @param e The exception to wrap.
      * @param message The UncheckedIOException message if an I/O error occurs.

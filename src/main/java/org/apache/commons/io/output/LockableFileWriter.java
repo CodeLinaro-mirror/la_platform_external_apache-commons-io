@@ -21,6 +21,7 @@ import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.nio.charset.Charset;
 import java.util.Objects;
@@ -28,7 +29,6 @@ import java.util.Objects;
 import org.apache.commons.io.Charsets;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.build.AbstractOrigin;
-import org.apache.commons.io.build.AbstractOriginSupplier;
 import org.apache.commons.io.build.AbstractStreamBuilder;
 
 /**
@@ -37,21 +37,25 @@ import org.apache.commons.io.build.AbstractStreamBuilder;
  * This class provides a simple alternative to {@link FileWriter} that will use a lock file to prevent duplicate writes.
  * </p>
  * <p>
- * <b>Note:</b> The lock file is deleted when {@link #close()} is called - or if the main file cannot be opened initially. In the (unlikely) event that the lock
- * file cannot be deleted, an exception is thrown.
+ * <strong>Note:</strong> The lock file is deleted when {@link #close()} is called - or if the main file cannot be opened initially. In the (unlikely) event
+ * that the lock file cannot be deleted, an exception is thrown.
  * </p>
  * <p>
  * By default, the file will be overwritten, but this may be changed to append. The lock directory may be specified, but defaults to the system property
  * {@code java.io.tmpdir}. The encoding may also be specified, and defaults to the platform default.
  * </p>
  * <p>
- * To build an instance, see {@link Builder}.
+ * To build an instance, use {@link Builder}.
  * </p>
+ *
+ * @see Builder
  */
 public class LockableFileWriter extends Writer {
 
+    // @formatter:off
     /**
-     * Builds a new {@link LockableFileWriter} instance.
+     * Builds a new {@link LockableFileWriter}.
+     *
      * <p>
      * Using a CharsetEncoder:
      * </p>
@@ -63,15 +67,17 @@ public class LockableFileWriter extends Writer {
      *   .get();}
      * </pre>
      *
+     * @see #get()
      * @since 2.12.0
      */
+    // @formatter:on
     public static class Builder extends AbstractStreamBuilder<LockableFileWriter, Builder> {
 
         private boolean append;
-        private AbstractOrigin<?, ?> lockDirectory = AbstractOriginSupplier.newFileOrigin(FileUtils.getTempDirectoryPath());
+        private AbstractOrigin<?, ?> lockDirectory = newFileOrigin(FileUtils.getTempDirectoryPath());
 
         /**
-         * Constructs a new Builder.
+         * Builds a new {@link LockableFileWriter}.
          */
         public Builder() {
             setBufferSizeDefault(AbstractByteArrayOutputStream.DEFAULT_SIZE);
@@ -81,12 +87,17 @@ public class LockableFileWriter extends Writer {
         /**
          * Constructs a new instance.
          * <p>
-         * This builder use the aspects File, Charset, append, and lockDirectory.
+         * You must set input that supports {@link File} on this builder, otherwise, this method throws an exception.
          * </p>
          * <p>
-         * You must provide an origin that can be converted to a File by this builder, otherwise, this call will throw an
-         * {@link UnsupportedOperationException}.
+         * This builder use the following aspects:
          * </p>
+         * <ul>
+         * <li>{@link File}</li>
+         * <li>{@link #getCharset()}</li>
+         * <li>append</li>
+         * <li>lockDirectory</li>
+         * </ul>
          *
          * @return a new instance.
          * @throws UnsupportedOperationException if the origin cannot provide a File.
@@ -102,7 +113,7 @@ public class LockableFileWriter extends Writer {
          * Sets whether to append (true) or overwrite (false).
          *
          * @param append whether to append (true) or overwrite (false).
-         * @return this
+         * @return {@code this} instance.
          */
         public Builder setAppend(final boolean append) {
             this.append = append;
@@ -113,10 +124,10 @@ public class LockableFileWriter extends Writer {
          * Sets the directory in which the lock file should be held.
          *
          * @param lockDirectory the directory in which the lock file should be held.
-         * @return this
+         * @return {@code this} instance.
          */
         public Builder setLockDirectory(final File lockDirectory) {
-            this.lockDirectory = AbstractOriginSupplier.newFileOrigin(lockDirectory != null ? lockDirectory : FileUtils.getTempDirectory());
+            this.lockDirectory = newFileOrigin(lockDirectory != null ? lockDirectory : FileUtils.getTempDirectory());
             return this;
         }
 
@@ -124,10 +135,10 @@ public class LockableFileWriter extends Writer {
          * Sets the directory in which the lock file should be held.
          *
          * @param lockDirectory the directory in which the lock file should be held.
-         * @return this
+         * @return {@code this} instance.
          */
         public Builder setLockDirectory(final String lockDirectory) {
-            this.lockDirectory = AbstractOriginSupplier.newFileOrigin(lockDirectory != null ? lockDirectory : FileUtils.getTempDirectoryPath());
+            this.lockDirectory = newFileOrigin(lockDirectory != null ? lockDirectory : FileUtils.getTempDirectoryPath());
             return this;
         }
 
@@ -190,7 +201,7 @@ public class LockableFileWriter extends Writer {
      * @param lockDir the directory in which the lock file should be held
      * @throws NullPointerException if the file is null
      * @throws IOException          in case of an I/O error
-     * @deprecated 2.5 use {@link #LockableFileWriter(File, Charset, boolean, String)} instead
+     * @deprecated Use {@link #LockableFileWriter(File, Charset, boolean, String)} instead
      */
     @Deprecated
     public LockableFileWriter(final File file, final boolean append, final String lockDir) throws IOException {
@@ -255,7 +266,7 @@ public class LockableFileWriter extends Writer {
      * @param charsetName the name of the requested charset, null means platform default
      * @throws NullPointerException                         if the file is null
      * @throws IOException                                  in case of an I/O error
-     * @throws java.nio.charset.UnsupportedCharsetException thrown instead of {@link java.io.UnsupportedEncodingException} in version 2.2 if the encoding is not
+     * @throws java.nio.charset.UnsupportedCharsetException thrown instead of {@link UnsupportedEncodingException} in version 2.2 if the encoding is not
      *                                                      supported.
      * @deprecated Use {@link #builder()}, {@link Builder}, and {@link Builder#get()}
      */
@@ -273,7 +284,7 @@ public class LockableFileWriter extends Writer {
      * @param lockDir     the directory in which the lock file should be held
      * @throws NullPointerException                         if the file is null
      * @throws IOException                                  in case of an I/O error
-     * @throws java.nio.charset.UnsupportedCharsetException thrown instead of {@link java.io.UnsupportedEncodingException} in version 2.2 if the encoding is not
+     * @throws java.nio.charset.UnsupportedCharsetException thrown instead of {@link UnsupportedEncodingException} in version 2.2 if the encoding is not
      *                                                      supported.
      * @deprecated Use {@link #builder()}, {@link Builder}, and {@link Builder#get()}
      */

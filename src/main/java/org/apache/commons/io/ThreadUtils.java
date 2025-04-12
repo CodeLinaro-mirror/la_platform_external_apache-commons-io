@@ -51,4 +51,13 @@ public final class ThreadUtils {
         } while (!remainingDuration.isNegative());
     }
 
+    /**
+     * Make private in 3.0.
+     *
+     * @deprecated TODO Make private in 3.0.
+     */
+    @Deprecated
+    public ThreadUtils() {
+        // empty
+    }
 }

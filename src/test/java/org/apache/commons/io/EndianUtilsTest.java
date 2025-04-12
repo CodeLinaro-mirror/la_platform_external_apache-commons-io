@@ -44,6 +44,20 @@ public class EndianUtilsTest  {
     }
 
     @Test
+    public void testInvalidOffset() throws IOException {
+        final byte[] bytes = {};
+
+        assertThrows(IllegalArgumentException.class, () -> EndianUtils.readSwappedInteger(bytes, 0));
+        assertThrows(IllegalArgumentException.class, () -> EndianUtils.readSwappedLong(bytes, 0));
+        assertThrows(IllegalArgumentException.class, () -> EndianUtils.readSwappedShort(bytes, 0));
+        assertThrows(IllegalArgumentException.class, () -> EndianUtils.readSwappedUnsignedInteger(bytes, 0));
+        assertThrows(IllegalArgumentException.class, () -> EndianUtils.readSwappedUnsignedShort(bytes, 0));
+        assertThrows(IllegalArgumentException.class, () -> EndianUtils.writeSwappedInteger(bytes, 0, 0));
+        assertThrows(IllegalArgumentException.class, () -> EndianUtils.writeSwappedLong(bytes, 0, 0L));
+        assertThrows(IllegalArgumentException.class, () -> EndianUtils.writeSwappedShort(bytes, 0, (short) 0));
+    }
+
+    @Test
     public void testReadSwappedDouble() throws IOException {
         final byte[] bytes = { 0x08, 0x07, 0x06, 0x05, 0x04, 0x03, 0x02, 0x01 };
         final double d1 = Double.longBitsToDouble( 0x0102030405060708L );
@@ -193,7 +207,7 @@ public class EndianUtilsTest  {
     // tests #IO-117
     @Test
     public void testUnsignedOverrun() throws Exception {
-        final byte[] target = { 0, 0, 0, (byte)0x80 };
+        final byte[] target = { 0, 0, 0, (byte) 0x80 };
         final long expected = 0x80000000L;
 
         long actual = EndianUtils.readSwappedUnsignedInteger(target, 0);

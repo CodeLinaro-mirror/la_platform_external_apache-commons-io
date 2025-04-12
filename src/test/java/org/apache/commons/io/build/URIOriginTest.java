@@ -16,23 +16,53 @@
  */
 package org.apache.commons.io.build;
 
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+
+import java.io.InputStream;
 import java.net.URI;
 import java.nio.file.Paths;
 
 import org.apache.commons.io.build.AbstractOrigin.URIOrigin;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 /**
  * Tests {@link URIOrigin}.
  *
  * A URIOrigin can convert into all other aspects.
+ *
+ * @see URI
  */
 public class URIOriginTest extends AbstractOriginTest<URI, URIOrigin> {
 
-    @BeforeEach
-    public void beforeEach() {
-        setOriginRo(new URIOrigin(Paths.get(FILE_NAME_RO).toUri()));
-        setOriginRw(new URIOrigin(Paths.get(FILE_NAME_RW).toUri()));
+    @Override
+    protected URIOrigin newOriginRo() {
+        return new URIOrigin(Paths.get(FILE_NAME_RO).toUri());
     }
 
+    @Override
+    protected URIOrigin newOriginRw() {
+        return new URIOrigin(Paths.get(FILE_NAME_RW).toUri());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "http://example.com",
+            "https://example.com"
+    })
+    void testGetInputStream(final String uri) throws Exception {
+        final AbstractOrigin.URIOrigin origin = new AbstractOrigin.URIOrigin(new URI(uri));
+        try (final InputStream in = origin.getInputStream()) {
+            assertNotEquals(-1, in.read());
+        }
+    }
+
+    @Test
+    void testGetInputStreamFileURI() throws Exception {
+        final AbstractOrigin.URIOrigin origin = getOriginRo().asThis();
+        try (final InputStream in = origin.getInputStream()) {
+            assertNotEquals(-1, in.read());
+        }
+    }
 }

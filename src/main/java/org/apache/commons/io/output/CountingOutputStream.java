@@ -40,7 +40,6 @@ public class CountingOutputStream extends ProxyOutputStream {
         super(out);
     }
 
-
     /**
      * Updates the count with the number of bytes that are being written.
      *
@@ -87,7 +86,7 @@ public class CountingOutputStream extends ProxyOutputStream {
     }
 
     /**
-     * Set the byte count back to 0.
+     * Sets the byte count back to 0.
      * <p>
      * NOTE: This method is an alternative for {@code resetCount()}.
      * It was added because that method returns an integer which will
@@ -104,7 +103,7 @@ public class CountingOutputStream extends ProxyOutputStream {
     }
 
     /**
-     * Set the byte count back to 0.
+     * Sets the byte count back to 0.
      * <p>
      * NOTE: From v1.3 this method throws an ArithmeticException if the
      * count is greater than can be expressed by an {@code int}.
