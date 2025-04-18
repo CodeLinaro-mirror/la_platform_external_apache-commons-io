@@ -73,6 +73,34 @@ public class ReaderInputStreamTest {
 
     private final Random random = new Random();
 
+    private ReaderInputStream createInputStream() throws IOException {
+        // @formatter:off
+        return ReaderInputStream.builder()
+                .setReader(new StringReader(TEST_STRING))
+                .setCharset(StandardCharsets.ISO_8859_1)
+                .get();
+        // @formatter:on
+    }
+
+    @Test
+    public void testAvailableAfterClose() throws IOException {
+        try (InputStream inputStream = createInputStream()) {
+            inputStream.close();
+            assertEquals(0, inputStream.available());
+        }
+    }
+
+    @Test
+    public void testAvailableAfterOpen() throws IOException {
+        try (InputStream inputStream = createInputStream()) {
+            // Nothing read, may block
+            assertEquals(0, inputStream.available());
+            // Read/block
+            inputStream.read();
+            assertEquals(TEST_STRING.length() - 1, inputStream.available());
+        }
+    }
+
     @Test
     @Timeout(value = 500, unit = TimeUnit.MILLISECONDS)
     public void testBufferSmallest() throws IOException {
@@ -227,6 +255,14 @@ public class ReaderInputStreamTest {
     @Test
     public void testLargeUTF8WithSingleByteRead() throws IOException {
         testWithSingleByteRead(LARGE_TEST_STRING, UTF_8);
+    }
+
+    @Test
+    public void testReadAfterClose() throws IOException {
+        try (InputStream inputStream = createInputStream()) {
+            inputStream.close();
+            assertThrows(IOException.class, inputStream::read);
+        }
     }
 
     @Test

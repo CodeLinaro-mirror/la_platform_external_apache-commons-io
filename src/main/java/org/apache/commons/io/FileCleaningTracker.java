@@ -54,7 +54,7 @@ public class FileCleaningTracker {
         /** Constructs a new Reaper */
         Reaper() {
             super("File Reaper");
-            setPriority(Thread.MAX_PRIORITY);
+            setPriority(MAX_PRIORITY);
             setDaemon(true);
         }
 
@@ -122,7 +122,7 @@ public class FileCleaningTracker {
         }
 
         /**
-         * Return the path.
+         * Gets the path.
          *
          * @return the path
          */
@@ -209,13 +209,13 @@ public class FileCleaningTracker {
     }
 
     /**
-     * Gets the file paths that failed to delete.
+     * Gets a copy of the file paths that failed to delete.
      *
-     * @return the file paths that failed to delete
+     * @return a copy of the file paths that failed to delete
      * @since 2.0
      */
     public List<String> getDeleteFailures() {
-        return deleteFailures;
+        return new ArrayList<>(deleteFailures);
     }
 
     /**

@@ -119,7 +119,6 @@ public class IOCaseTest {
         assertFalse(IOCase.SENSITIVE.checkEndsWith(null, null));
     }
 
-
     @Test
     public void test_checkEquals_case() {
         assertTrue(IOCase.SENSITIVE.checkEquals("ABC", "ABC"));
@@ -144,15 +143,18 @@ public class IOCaseTest {
         assertFalse(IOCase.SENSITIVE.checkEquals("", "ABC"));
         assertTrue(IOCase.SENSITIVE.checkEquals("", ""));
 
-        assertThrows(NullPointerException.class, () -> IOCase.SENSITIVE.checkEquals("ABC", null));
-        assertThrows(NullPointerException.class, () -> IOCase.SENSITIVE.checkEquals(null, "ABC"));
-        assertThrows(NullPointerException.class, () -> IOCase.SENSITIVE.checkEquals(null, null));
+        assertFalse(IOCase.SENSITIVE.checkEquals("ABC", null));
+        assertFalse(IOCase.SENSITIVE.checkEquals(null, "ABC"));
+        assertTrue(IOCase.SENSITIVE.checkEquals(null, null));
     }
 
     @Test
     public void test_checkIndexOf_case() {
         assertEquals(1,  IOCase.SENSITIVE.checkIndexOf("ABC", 0, "BC"));
         assertEquals(-1, IOCase.SENSITIVE.checkIndexOf("ABC", 0, "Bc"));
+        assertEquals(-1, IOCase.SENSITIVE.checkIndexOf(null, 0, "Bc"));
+        assertEquals(-1, IOCase.SENSITIVE.checkIndexOf(null, 0, null));
+        assertEquals(-1, IOCase.SENSITIVE.checkIndexOf("ABC", 0, null));
 
         assertEquals(1, IOCase.INSENSITIVE.checkIndexOf("ABC", 0, "BC"));
         assertEquals(1, IOCase.INSENSITIVE.checkIndexOf("ABC", 0, "Bc"));
@@ -200,9 +202,9 @@ public class IOCaseTest {
         // too long
         assertEquals(-1,   IOCase.SENSITIVE.checkIndexOf("DEF", 0, "ABCDEFGHIJ"));
 
-        assertThrows(NullPointerException.class, () -> IOCase.SENSITIVE.checkIndexOf("ABC", 0, null));
-        assertThrows(NullPointerException.class, () -> IOCase.SENSITIVE.checkIndexOf(null, 0, "ABC"));
-        assertThrows(NullPointerException.class, () -> IOCase.SENSITIVE.checkIndexOf(null, 0, null));
+        assertEquals(-1, IOCase.SENSITIVE.checkIndexOf("ABC", 0, null));
+        assertEquals(-1, IOCase.SENSITIVE.checkIndexOf(null, 0, "ABC"));
+        assertEquals(-1, IOCase.SENSITIVE.checkIndexOf(null, 0, null));
     }
 
     @Test
@@ -239,12 +241,12 @@ public class IOCaseTest {
         assertFalse(IOCase.SENSITIVE.checkRegionMatches("", 1, "ABC"));
         assertFalse(IOCase.SENSITIVE.checkRegionMatches("", 1, ""));
 
-        assertThrows(NullPointerException.class, () -> IOCase.SENSITIVE.checkRegionMatches("ABC", 0, null));
-        assertThrows(NullPointerException.class, () -> IOCase.SENSITIVE.checkRegionMatches(null, 0, "ABC"));
-        assertThrows(NullPointerException.class, () -> IOCase.SENSITIVE.checkRegionMatches(null, 0, null));
-        assertThrows(NullPointerException.class, () -> IOCase.SENSITIVE.checkRegionMatches("ABC", 1, null));
-        assertThrows(NullPointerException.class, () -> IOCase.SENSITIVE.checkRegionMatches(null, 1, "ABC"));
-        assertThrows(NullPointerException.class, () -> IOCase.SENSITIVE.checkRegionMatches(null, 1, null));
+        assertFalse(IOCase.SENSITIVE.checkRegionMatches("ABC", 0, null));
+        assertFalse(IOCase.SENSITIVE.checkRegionMatches(null, 0, "ABC"));
+        assertFalse(IOCase.SENSITIVE.checkRegionMatches(null, 0, null));
+        assertFalse(IOCase.SENSITIVE.checkRegionMatches("ABC", 1, null));
+        assertFalse(IOCase.SENSITIVE.checkRegionMatches(null, 1, "ABC"));
+        assertFalse(IOCase.SENSITIVE.checkRegionMatches(null, 1, null));
     }
 
     @Test

@@ -36,21 +36,23 @@ import java.util.List;
 import org.apache.commons.io.Charsets;
 import org.apache.commons.io.FileSystem;
 import org.apache.commons.io.StandardLineSeparator;
-import org.apache.commons.io.build.AbstractOrigin;
 import org.apache.commons.io.build.AbstractStreamBuilder;
 
 /**
  * Reads lines in a file reversely (similar to a BufferedReader, but starting at the last line). Useful for e.g. searching in log files.
  * <p>
- * To build an instance, see {@link Builder}.
+ * To build an instance, use {@link Builder}.
  * </p>
  *
+ * @see Builder
  * @since 2.2
  */
 public class ReversedLinesFileReader implements Closeable {
 
+    // @formatter:off
     /**
-     * Builds a new {@link ReversedLinesFileReader} instance.
+     * Builds a new {@link ReversedLinesFileReader}.
+     *
      * <p>
      * For example:
      * </p>
@@ -62,12 +64,14 @@ public class ReversedLinesFileReader implements Closeable {
      *   .get();}
      * </pre>
      *
+     * @see #get()
      * @since 2.12.0
      */
+    // @formatter:on
     public static class Builder extends AbstractStreamBuilder<ReversedLinesFileReader, Builder> {
 
         /**
-         * Constructs a new Builder.
+         * Constructs a new {@link Builder}.
          */
         public Builder() {
             setBufferSizeDefault(DEFAULT_BLOCK_SIZE);
@@ -75,18 +79,26 @@ public class ReversedLinesFileReader implements Closeable {
         }
 
         /**
-         * Constructs a new instance.
+         * Builds a new {@link ReversedLinesFileReader}.
          * <p>
-         * This builder use the aspects Path, Charset, buffer size.
+         * You must set input that supports {@link #getInputStream()} on this builder, otherwise, this method throws an exception.
          * </p>
          * <p>
-         * You must provide an origin that can be converted to a Path by this builder, otherwise, this call will throw an
-         * {@link UnsupportedOperationException}.
+         * This builder use the following aspects:
          * </p>
+         * <ul>
+         * <li>{@link #getInputStream()}</li>
+         * <li>{@link #getBufferSize()}</li>
+         * <li>{@link #getCharset()}</li>
+         * </ul>
          *
          * @return a new instance.
-         * @throws UnsupportedOperationException if the origin cannot provide a Path.
-         * @see AbstractOrigin#getPath()
+         * @throws IllegalStateException         if the {@code origin} is {@code null}.
+         * @throws UnsupportedOperationException if the origin cannot be converted to a {@link Path}.
+         * @throws IOException                   if an I/O error occurs.
+         * @see #getPath()
+         * @see #getBufferSize()
+         * @see #getCharset()
          */
         @Override
         public ReversedLinesFileReader get() throws IOException {
@@ -95,7 +107,7 @@ public class ReversedLinesFileReader implements Closeable {
 
     }
 
-    private class FilePart {
+    private final class FilePart {
         private final long no;
 
         private final byte[] data;
@@ -191,7 +203,7 @@ public class ReversedLinesFileReader implements Closeable {
                     break; // skip last few bytes and leave it to the next file part
                 }
 
-                // --- check for newline ---
+                // check for newline
                 if ((newLineMatchByteCount = getNewLineMatchByteCount(data, i)) > 0 /* found newline */) {
                     final int lineStart = i + 1;
                     final int lineLengthBytes = currentLastBytePos - lineStart + 1;
@@ -207,17 +219,17 @@ public class ReversedLinesFileReader implements Closeable {
                     break; // found line
                 }
 
-                // --- move cursor ---
+                // move cursor
                 i -= byteDecrement;
 
-                // --- end of file part handling ---
+                // end of file part handling
                 if (i < 0) {
                     createLeftOver();
                     break; // end of file part
                 }
             }
 
-            // --- last file part handling ---
+            // last file part handling
             if (isLastFilePart && leftOver != null) {
                 // there will be no line break anymore, this is the first line of the file
                 line = new String(leftOver, charset);
@@ -331,11 +343,7 @@ public class ReversedLinesFileReader implements Closeable {
      *                  system).
      * @param charsetName  the encoding of the file, null uses the default Charset.
      * @throws IOException                                  if an I/O error occurs
-     * @throws java.nio.charset.UnsupportedCharsetException thrown instead of
-     *                                                      {@link UnsupportedEncodingException}
-     *                                                      in version 2.2 if the
-     *                                                      encoding is not
-     *                                                      supported.
+     * @throws java.nio.charset.UnsupportedCharsetException if the encoding is not supported
      * @deprecated Use {@link #builder()}, {@link Builder}, and {@link Builder#get()}
      */
     @Deprecated
@@ -436,11 +444,7 @@ public class ReversedLinesFileReader implements Closeable {
      *                    system).
      * @param charsetName the encoding of the file, null uses the default Charset.
      * @throws IOException                                  if an I/O error occurs
-     * @throws java.nio.charset.UnsupportedCharsetException thrown instead of
-     *                                                      {@link UnsupportedEncodingException}
-     *                                                      in version 2.2 if the
-     *                                                      encoding is not
-     *                                                      supported.
+     * @throws java.nio.charset.UnsupportedCharsetException if the encoding is not supported
      * @since 2.7
      * @deprecated Use {@link #builder()}, {@link Builder}, and {@link Builder#get()}
      */

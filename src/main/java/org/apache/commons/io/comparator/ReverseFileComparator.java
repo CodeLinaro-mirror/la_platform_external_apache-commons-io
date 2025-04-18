@@ -30,7 +30,7 @@ import java.util.Objects;
  *
  * @since 1.4
  */
-class ReverseFileComparator extends AbstractFileComparator implements Serializable {
+final class ReverseFileComparator extends AbstractFileComparator implements Serializable {
 
     private static final long serialVersionUID = -4808255005272229056L;
     private final Comparator<File> delegate;
@@ -49,8 +49,8 @@ class ReverseFileComparator extends AbstractFileComparator implements Serializab
      *
      * @param file1 The first file to compare.
      * @param file2 The second file to compare.
-     * @return the result from the delegate {@link Comparator#compare(Object, Object)} reversing the value (i.e.
-     *         positive becomes negative and vice versa).
+     * @return the result from the delegate {@link Comparator#compare(Object, Object)} reversing the value,
+     *         positive becomes negative and vice versa.
      */
     @Override
     public int compare(final File file1, final File file2) {

@@ -26,6 +26,7 @@ import java.util.function.Function;
 import java.util.regex.Pattern;
 
 import org.apache.commons.io.IOCase;
+import org.apache.commons.io.file.PathUtils;
 
 /**
  * Filters files using supplied regular expression(s).
@@ -51,15 +52,15 @@ import org.apache.commons.io.IOCase;
  * final Path dir = PathUtils.current();
  * final AccumulatorPathVisitor visitor = AccumulatorPathVisitor.withLongCounters(new RegexFileFilter("^.*[tT]est(-\\d+)?\\.java$"));
  * //
- * // Walk one dir
- * Files.<b>walkFileTree</b>(dir, Collections.emptySet(), 1, visitor);
+ * // Walk one directory
+ * Files.<strong>walkFileTree</strong>(dir, Collections.emptySet(), 1, visitor);
  * System.out.println(visitor.getPathCounters());
  * System.out.println(visitor.getFileList());
  * //
  * visitor.getPathCounters().reset();
  * //
- * // Walk dir tree
- * Files.<b>walkFileTree</b>(dir, visitor);
+ * // Walk directory tree
+ * Files.<strong>walkFileTree</strong>(dir, visitor);
  * System.out.println(visitor.getPathCounters());
  * System.out.println(visitor.getDirList());
  * System.out.println(visitor.getFileList());
@@ -101,7 +102,7 @@ public class RegexFileFilter extends AbstractFileFilter implements Serializable 
     private final Pattern pattern;
 
     /** How convert a path to a string. */
-    private final Function<Path, String> pathToString;
+    private transient final Function<Path, String> pathToString;
 
     /**
      * Constructs a new regular expression filter for a compiled regular expression
@@ -111,7 +112,7 @@ public class RegexFileFilter extends AbstractFileFilter implements Serializable 
      */
     @SuppressWarnings("unchecked")
     public RegexFileFilter(final Pattern pattern) {
-        this(pattern, (Function<Path, String> & Serializable) p -> p.getFileName().toString());
+        this(pattern, (Function<Path, String> & Serializable) PathUtils::getFileNameString);
     }
 
     /**
@@ -125,7 +126,7 @@ public class RegexFileFilter extends AbstractFileFilter implements Serializable 
     public RegexFileFilter(final Pattern pattern, final Function<Path, String> pathToString) {
         Objects.requireNonNull(pattern, "pattern");
         this.pattern = pattern;
-        this.pathToString = pathToString;
+        this.pathToString = pathToString != null ? pathToString : Objects::toString;
     }
 
     /**
@@ -176,12 +177,13 @@ public class RegexFileFilter extends AbstractFileFilter implements Serializable 
      * Checks to see if the file name matches one of the regular expressions.
      *
      * @param path the path
-     * @param attributes the path attributes
+     * @param attributes the path's basic attributes (may be null).
      * @return true if the file name matches one of the regular expressions
      */
     @Override
     public FileVisitResult accept(final Path path, final BasicFileAttributes attributes) {
-        return toFileVisitResult(pattern.matcher(pathToString.apply(path)).matches());
+        final String result = pathToString.apply(path);
+        return toFileVisitResult(result != null && pattern.matcher(result).matches());
     }
 
     /**

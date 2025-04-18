@@ -23,7 +23,7 @@ import java.util.Comparator;
 import org.apache.commons.io.IOCase;
 
 /**
- * Compare the <b>path</b> of two files for order (see {@link File#getPath()}).
+ * Compare the <strong>path</strong> of two files for order (see {@link File#getPath()}).
  * <p>
  * This comparator can be used to sort lists or arrays of files
  * by their path either in a case-sensitive, case-insensitive or
@@ -32,7 +32,7 @@ import org.apache.commons.io.IOCase;
  * and the reverse of those options.
  * </p>
  * <p>
- * Example of a <i>case-sensitive</i> file path sort using the
+ * Example of a <em>case-sensitive</em> file path sort using the
  * {@link #PATH_COMPARATOR} singleton instance:
  * </p>
  * <pre>
@@ -40,7 +40,7 @@ import org.apache.commons.io.IOCase;
  *       ((AbstractFileComparator) PathFileComparator.PATH_COMPARATOR).sort(list);
  * </pre>
  * <p>
- * Example of a <i>reverse case-insensitive</i> file path sort using the
+ * Example of a <em>reverse case-insensitive</em> file path sort using the
  * {@link #PATH_INSENSITIVE_REVERSE} singleton instance:
  * </p>
  * <pre>
@@ -103,7 +103,6 @@ public class PathFileComparator extends AbstractFileComparator implements Serial
      * is less than the second, zero if the paths are the
      * same and a positive value if the first files path
      * is greater than the second file.
-     *
      */
     @Override
     public int compare(final File file1, final File file2) {

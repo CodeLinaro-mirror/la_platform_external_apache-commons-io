@@ -17,13 +17,26 @@
 package org.apache.commons.io.input;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertThrowsExactly;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.security.MessageDigest;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.codec.digest.MessageDigestAlgorithms;
+import org.apache.commons.io.IOExceptionList;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.MessageDigestCalculatingInputStream.Builder;
+import org.apache.commons.io.test.CustomIOException;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -32,9 +45,69 @@ import org.junit.jupiter.api.Test;
 @SuppressWarnings("deprecation")
 public class MessageDigestCalculatingInputStreamTest {
 
+    private InputStream createInputStream() throws IOException {
+        final ByteArrayInputStream origin = new ByteArrayInputStream(MessageDigestInputStreamTest.generateRandomByteStream(256));
+        return createInputStream(origin);
+    }
+
+    private MessageDigestCalculatingInputStream createInputStream(final InputStream origin) throws IOException {
+        return MessageDigestCalculatingInputStream.builder().setInputStream(origin).get();
+    }
+
+    @Test
+    public void testAfterReadConsumer() throws Exception {
+        final AtomicBoolean boolRef = new AtomicBoolean();
+        // @formatter:off
+        try (InputStream bounded = MessageDigestCalculatingInputStream.builder()
+                .setCharSequence("Hi")
+                .setAfterRead(i -> boolRef.set(true))
+                .get()) {
+            IOUtils.consume(bounded);
+        }
+        // @formatter:on
+        assertTrue(boolRef.get());
+        // Throwing
+        final String message = "test exception message";
+        // @formatter:off
+        try (InputStream bounded = MessageDigestCalculatingInputStream.builder()
+                .setCharSequence("Hi")
+                .setAfterRead(i -> {
+                    throw new CustomIOException(message);
+                })
+                .get()) {
+            assertTrue(assertThrowsExactly(IOExceptionList.class, () -> IOUtils.consume(bounded)).getMessage().contains(message));
+        }
+        // @formatter:on
+    }
+
+    @SuppressWarnings("resource")
+    @Test
+    public void testAvailableAfterClose() throws Exception {
+        final InputStream shadow;
+        try (InputStream in = createInputStream()) {
+            assertTrue(in.available() > 0);
+            shadow = in;
+        }
+        assertEquals(0, shadow.available());
+    }
+
+    @Test
+    public void testAvailableAfterOpen() throws Exception {
+        try (InputStream in = createInputStream()) {
+            assertTrue(in.available() > 0);
+            assertNotEquals(IOUtils.EOF, in.read());
+            assertTrue(in.available() > 0);
+        }
+    }
+
+    @Test
+    public void testCloseHandleIOException() throws IOException {
+        ProxyInputStreamTest.testCloseHandleIOException(MessageDigestCalculatingInputStream.builder());
+    }
+
     @Test
     public void testNormalUse() throws Exception {
-        for (int i = 256; i < 8192; i = i * 2) {
+        for (int i = 256; i < 8192; i *= 2) {
             final byte[] buffer = MessageDigestInputStreamTest.generateRandomByteStream(i);
             final MessageDigest defaultMessageDigest = MessageDigestCalculatingInputStream.getDefaultMessageDigest();
             final byte[] defaultExpect = defaultMessageDigest.digest(buffer);
@@ -72,6 +145,25 @@ public class MessageDigestCalculatingInputStreamTest {
                     assertArrayEquals(sha512Expect, messageDigestInputStream.getMessageDigest().digest());
                 }
             }
+        }
+    }
+
+    @Test
+    public void testReadAfterClose_ByteArrayInputStream() throws Exception {
+        try (InputStream in = createInputStream()) {
+            in.close();
+            // ByteArrayInputStream does not throw on a closed stream.
+            assertNotEquals(IOUtils.EOF, in.read());
+        }
+    }
+
+    @SuppressWarnings("resource")
+    @Test
+    public void testReadAfterClose_ChannelInputStream() throws Exception {
+        try (InputStream in = createInputStream(Files.newInputStream(Paths.get("src/test/resources/org/apache/commons/io/abitmorethan16k.txt")))) {
+            in.close();
+            // ChannelInputStream throws when closed
+            assertThrows(IOException.class, in::read);
         }
     }
 

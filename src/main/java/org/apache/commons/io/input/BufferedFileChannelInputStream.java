@@ -15,6 +15,7 @@ package org.apache.commons.io.input;
 
 import static org.apache.commons.io.IOUtils.EOF;
 
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -25,30 +26,31 @@ import java.nio.file.StandardOpenOption;
 import java.util.Objects;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.io.build.AbstractOrigin;
 import org.apache.commons.io.build.AbstractStreamBuilder;
 
 /**
  * {@link InputStream} implementation which uses direct buffer to read a file to avoid extra copy of data between Java and native memory which happens when
- * using {@link java.io.BufferedInputStream}. Unfortunately, this is not something already available in JDK, {@code sun.nio.ch.ChannelInputStream} supports
+ * using {@link BufferedInputStream}. Unfortunately, this is not something already available in JDK, {@code sun.nio.ch.ChannelInputStream} supports
  * reading a file using NIO, but does not support buffering.
  * <p>
- * To build an instance, see {@link Builder}.
+ * To build an instance, use {@link Builder}.
  * </p>
  * <p>
  * This class was ported and adapted from Apache Spark commit 933dc6cb7b3de1d8ccaf73d124d6eb95b947ed19 where it was called {@code NioBufferedFileInputStream}.
  * </p>
  *
+ * @see Builder
  * @since 2.9.0
  */
 public final class BufferedFileChannelInputStream extends InputStream {
 
+    // @formatter:off
     /**
-     * Builds a new {@link BufferedFileChannelInputStream} instance.
+     * Builds a new {@link BufferedFileChannelInputStream}.
+     *
      * <p>
      * Using File IO:
      * </p>
-     *
      * <pre>{@code
      * BufferedFileChannelInputStream s = BufferedFileChannelInputStream.builder()
      *   .setFile(file)
@@ -58,7 +60,6 @@ public final class BufferedFileChannelInputStream extends InputStream {
      * <p>
      * Using NIO Path:
      * </p>
-     *
      * <pre>{@code
      * BufferedFileChannelInputStream s = BufferedFileChannelInputStream.builder()
      *   .setPath(path)
@@ -66,27 +67,53 @@ public final class BufferedFileChannelInputStream extends InputStream {
      *   .get();}
      * </pre>
      *
+     * @see #get()
      * @since 2.12.0
      */
+    // @formatter:on
     public static class Builder extends AbstractStreamBuilder<BufferedFileChannelInputStream, Builder> {
 
+        private FileChannel fileChannel;
+
         /**
-         * Constructs a new instance.
+         * Builds a new {@link BufferedFileChannelInputStream}.
          * <p>
-         * This builder use the aspects Path and buffer size.
+         * You must set input that supports {@link #getInputStream()}, otherwise, this method throws an exception.
          * </p>
          * <p>
-         * You must provide an origin that can be converted to a Path by this builder, otherwise, this call will throw an
-         * {@link UnsupportedOperationException}.
+         * This builder use the following aspects:
          * </p>
+         * <ul>
+         * <li>{@link #getInputStream()}</li>
+         * <li>{@link #getBufferSize()}</li>
+         * </ul>
          *
          * @return a new instance.
-         * @throws UnsupportedOperationException if the origin cannot provide a Path.
-         * @see AbstractOrigin#getPath()
+         * @throws IllegalStateException         if the {@code origin} is {@code null}.
+         * @throws UnsupportedOperationException if the origin cannot be converted to a {@link Path}.
+         * @throws IOException If an I/O error occurs
+         * @see #getPath()
+         * @see #getBufferSize()
          */
         @Override
         public BufferedFileChannelInputStream get() throws IOException {
-            return new BufferedFileChannelInputStream(getPath(), getBufferSize());
+            return fileChannel != null ? new BufferedFileChannelInputStream(fileChannel, getBufferSize())
+                    : new BufferedFileChannelInputStream(getPath(), getBufferSize());
+        }
+
+        /**
+         * Sets the file channel.
+         * <p>
+         * This setting takes precedence over all others.
+         * </p>
+         *
+         * @param fileChannel the file channel.
+         * @return this instance.
+         * @since 2.18.0
+         */
+        public Builder setFileChannel(final FileChannel fileChannel) {
+            this.fileChannel = fileChannel;
+            return this;
         }
 
     }
@@ -130,6 +157,12 @@ public final class BufferedFileChannelInputStream extends InputStream {
         this(file.toPath(), bufferSize);
     }
 
+    private BufferedFileChannelInputStream(final FileChannel fileChannel, final int bufferSize) {
+        this.fileChannel = Objects.requireNonNull(fileChannel, "path");
+        byteBuffer = ByteBuffer.allocateDirect(bufferSize);
+        byteBuffer.flip();
+    }
+
     /**
      * Constructs a new instance for the given Path.
      *
@@ -150,16 +183,20 @@ public final class BufferedFileChannelInputStream extends InputStream {
      * @throws IOException If an I/O error occurs
      * @deprecated Use {@link #builder()}, {@link Builder}, and {@link Builder#get()}
      */
+    @SuppressWarnings("resource")
     @Deprecated
     public BufferedFileChannelInputStream(final Path path, final int bufferSize) throws IOException {
-        Objects.requireNonNull(path, "path");
-        fileChannel = FileChannel.open(path, StandardOpenOption.READ);
-        byteBuffer = ByteBuffer.allocateDirect(bufferSize);
-        byteBuffer.flip();
+        this(FileChannel.open(path, StandardOpenOption.READ), bufferSize);
     }
 
     @Override
     public synchronized int available() throws IOException {
+        if (!fileChannel.isOpen()) {
+            return 0;
+        }
+        if (!refill()) {
+            return 0;
+        }
         return byteBuffer.remaining();
     }
 
@@ -228,6 +265,7 @@ public final class BufferedFileChannelInputStream extends InputStream {
      * @throws IOException if an I/O error occurs.
      */
     private boolean refill() throws IOException {
+        Input.checkOpen(fileChannel.isOpen());
         if (!byteBuffer.hasRemaining()) {
             byteBuffer.clear();
             int nRead = 0;

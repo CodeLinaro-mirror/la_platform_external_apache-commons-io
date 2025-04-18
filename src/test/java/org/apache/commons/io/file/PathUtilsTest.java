@@ -55,6 +55,7 @@ import org.apache.commons.io.filefilter.NameFileFilter;
 import org.apache.commons.io.test.TestUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.SystemProperties;
 import org.apache.commons.lang3.SystemUtils;
 import org.junit.jupiter.api.Test;
 
@@ -72,24 +73,6 @@ public class PathUtilsTest extends AbstractTempDirTest {
     private static final String TEST_JAR_PATH = "src/test/resources/org/apache/commons/io/test.jar";
 
     private static final String PATH_FIXTURE = "NOTICE.txt";
-
-    /**
-     * Creates directory test fixtures.
-     * <ol>
-     * <li>tempDirPath/subdir</li>
-     * <li>tempDirPath/symlinked-dir -> tempDirPath/subdir</li>
-     * </ol>
-     *
-     * @return Path to tempDirPath/subdir
-     * @throws IOException if an I/O error occurs or the parent directory does not exist.
-     */
-    private Path createTempSymlinkedRelativeDir() throws IOException {
-        final Path targetDir = tempDirPath.resolve("subdir");
-        final Path symlinkDir = tempDirPath.resolve("symlinked-dir");
-        Files.createDirectory(targetDir);
-        Files.createSymbolicLink(symlinkDir, targetDir);
-        return symlinkDir;
-    }
 
     private Path current() {
         return PathUtils.current();
@@ -154,7 +137,8 @@ public class PathUtilsTest extends AbstractTempDirTest {
     @Test
     public void testCopyDirectoryForDifferentFilesystemsWithRelativePath() throws IOException {
         final Path archivePath = Paths.get(TEST_JAR_PATH);
-        try (FileSystem archive = openArchive(archivePath, false); final FileSystem targetArchive = openArchive(tempDirPath.resolve(TEST_JAR_NAME), true)) {
+        try (FileSystem archive = openArchive(archivePath, false);
+                final FileSystem targetArchive = openArchive(tempDirPath.resolve(TEST_JAR_NAME), true)) {
             final Path targetDir = targetArchive.getPath("targetDir");
             Files.createDirectory(targetDir);
             // relative jar -> relative dir
@@ -233,7 +217,7 @@ public class PathUtilsTest extends AbstractTempDirTest {
 
     @Test
     public void testCreateDirectoriesSymlink() throws IOException {
-        final Path symlinkedDir = createTempSymlinkedRelativeDir();
+        final Path symlinkedDir = createTempSymbolicLinkedRelativeDir(tempDirPath);
         final String leafDirName = "child";
         final Path newDirFollowed = PathUtils.createParentDirectories(symlinkedDir.resolve(leafDirName), PathUtils.NULL_LINK_OPTION);
         assertEquals(Files.readSymbolicLink(symlinkedDir), newDirFollowed);
@@ -241,8 +225,89 @@ public class PathUtilsTest extends AbstractTempDirTest {
 
     @Test
     public void testCreateDirectoriesSymlinkClashing() throws IOException {
-        final Path symlinkedDir = createTempSymlinkedRelativeDir();
+        final Path symlinkedDir = createTempSymbolicLinkedRelativeDir(tempDirPath);
         assertEquals(symlinkedDir, PathUtils.createParentDirectories(symlinkedDir.resolve("child")));
+    }
+
+    @Test
+    public void testGetBaseNamePathBaseCases() {
+        assertEquals("bar", PathUtils.getBaseName(Paths.get("a/b/c/bar.foo")));
+        assertEquals("foo", PathUtils.getBaseName(Paths.get("foo")));
+        assertEquals("", PathUtils.getBaseName(Paths.get("")));
+        assertEquals("", PathUtils.getBaseName(Paths.get(".")));
+        for (final File f : File.listRoots()) {
+            assertNull(PathUtils.getBaseName(f.toPath()));
+        }
+        if (SystemUtils.IS_OS_WINDOWS) {
+            assertNull(PathUtils.getBaseName(Paths.get("C:\\")));
+        }
+    }
+
+    @Test
+    public void testGetBaseNamePathCornerCases() {
+        assertNull(PathUtils.getBaseName((Path) null));
+        assertEquals("foo", PathUtils.getBaseName(Paths.get("foo.")));
+        assertEquals("", PathUtils.getBaseName(Paths.get("bar/.foo")));
+    }
+
+    @Test
+    public void testGetDosFileAttributeView() {
+        // dir
+        final DosFileAttributeView dosFileAttributeView = PathUtils.getDosFileAttributeView(current());
+        final Path path = Paths.get("this-file-does-not-exist-at.all");
+        assertFalse(Files.exists(path));
+        if (SystemUtils.IS_OS_MAC) {
+            assertNull(dosFileAttributeView);
+            // missing file
+            assertNull(PathUtils.getDosFileAttributeView(path));
+        } else {
+            assertNotNull(dosFileAttributeView);
+            // missing file
+            assertNotNull(PathUtils.getDosFileAttributeView(path));
+        }
+        // null
+        assertThrows(NullPointerException.class, () -> PathUtils.getDosFileAttributeView(null));
+    }
+
+    @Test
+    public void testGetExtension() {
+        assertNull(PathUtils.getExtension(null));
+        assertEquals("ext", PathUtils.getExtension(Paths.get("file.ext")));
+        assertEquals("", PathUtils.getExtension(Paths.get("README")));
+        assertEquals("com", PathUtils.getExtension(Paths.get("domain.dot.com")));
+        assertEquals("jpeg", PathUtils.getExtension(Paths.get("image.jpeg")));
+        assertEquals("", PathUtils.getExtension(Paths.get("a.b/c")));
+        assertEquals("txt", PathUtils.getExtension(Paths.get("a.b/c.txt")));
+        assertEquals("", PathUtils.getExtension(Paths.get("a/b/c")));
+        assertEquals("", PathUtils.getExtension(Paths.get("a.b\\c")));
+        assertEquals("txt", PathUtils.getExtension(Paths.get("a.b\\c.txt")));
+        assertEquals("", PathUtils.getExtension(Paths.get("a\\b\\c")));
+        assertEquals("", PathUtils.getExtension(Paths.get("C:\\temp\\foo.bar\\README")));
+        assertEquals("ext", PathUtils.getExtension(Paths.get("../filename.ext")));
+
+        if (File.separatorChar != '\\') {
+            // Upwards compatibility:
+            assertEquals("txt", PathUtils.getExtension(Paths.get("foo.exe:bar.txt")));
+        }
+    }
+
+    @Test
+    public void testGetFileName() {
+        assertNull(PathUtils.getFileName(null, null));
+        assertNull(PathUtils.getFileName(null, Path::toString));
+        assertNull(PathUtils.getFileName(Paths.get("/"), Path::toString));
+        assertNull(PathUtils.getFileName(Paths.get("/"), Path::toString));
+        assertEquals("", PathUtils.getFileName(Paths.get(""), Path::toString));
+        assertEquals("a", PathUtils.getFileName(Paths.get("a"), Path::toString));
+        assertEquals("a", PathUtils.getFileName(Paths.get("p", "a"), Path::toString));
+    }
+
+    @Test
+    public void testGetFileNameString() {
+        assertNull(PathUtils.getFileNameString(Paths.get("/")));
+        assertEquals("", PathUtils.getFileNameString(Paths.get("")));
+        assertEquals("a", PathUtils.getFileNameString(Paths.get("a")));
+        assertEquals("a", PathUtils.getFileNameString(Paths.get("p", "a")));
     }
 
     @Test
@@ -278,7 +343,7 @@ public class PathUtilsTest extends AbstractTempDirTest {
 
     @Test
     public void testGetTempDirectory() {
-        final Path tempDirectory = Paths.get(System.getProperty("java.io.tmpdir"));
+        final Path tempDirectory = Paths.get(SystemProperties.getJavaIoTmpdir());
         assertEquals(tempDirectory, PathUtils.getTempDirectory());
     }
 
@@ -312,6 +377,12 @@ public class PathUtilsTest extends AbstractTempDirTest {
     }
 
     @Test
+    public void testIsPosixAbsentFile() {
+        assertFalse(PathUtils.isPosix(Paths.get("ImNotHereAtAllEver.never")));
+        assertFalse(PathUtils.isPosix(null));
+    }
+
+    @Test
     public void testIsRegularFile() throws IOException {
         assertFalse(PathUtils.isRegularFile(null));
 
@@ -330,7 +401,7 @@ public class PathUtilsTest extends AbstractTempDirTest {
         try (DirectoryStream<Path> stream = PathUtils.newDirectoryStream(current(), pathFilter)) {
             final Iterator<Path> iterator = stream.iterator();
             final Path path = iterator.next();
-            assertEquals(PATH_FIXTURE, path.getFileName().toString());
+            assertEquals(PATH_FIXTURE, PathUtils.getFileNameString(path));
             assertFalse(iterator.hasNext());
         }
     }
@@ -365,7 +436,7 @@ public class PathUtilsTest extends AbstractTempDirTest {
 
     @Test
     public void testNewOutputStreamNewFileInsideExistingSymlinkedDir() throws IOException {
-        final Path symlinkDir = createTempSymlinkedRelativeDir();
+        final Path symlinkDir = createTempSymbolicLinkedRelativeDir(tempDirPath);
         final Path file = symlinkDir.resolve("test.txt");
         try (OutputStream outputStream = PathUtils.newOutputStream(file, new LinkOption[] {})) {
             // empty
@@ -467,6 +538,11 @@ public class PathUtilsTest extends AbstractTempDirTest {
         //
         PathUtils.setReadOnly(resolved, false);
         PathUtils.deleteFile(resolved);
+    }
+
+    @Test
+    public void testSetReadOnlyFileAbsent() {
+        assertThrows(IOException.class, () -> PathUtils.setReadOnly(Paths.get("does-not-exist-at-all-ever-never"), true));
     }
 
     @Test

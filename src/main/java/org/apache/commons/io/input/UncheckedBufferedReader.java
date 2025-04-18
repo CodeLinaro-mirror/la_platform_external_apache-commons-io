@@ -22,18 +22,17 @@ import java.io.IOException;
 import java.io.Reader;
 import java.io.UncheckedIOException;
 import java.nio.CharBuffer;
-import java.nio.charset.Charset;
 
-import org.apache.commons.io.build.AbstractOrigin;
 import org.apache.commons.io.build.AbstractStreamBuilder;
 import org.apache.commons.io.function.Uncheck;
 
 /**
  * A {@link BufferedReader} that throws {@link UncheckedIOException} instead of {@link IOException}.
  * <p>
- * To build an instance, see {@link Builder}.
+ * To build an instance, use {@link Builder}.
  * </p>
  *
+ * @see Builder
  * @see BufferedReader
  * @see IOException
  * @see UncheckedIOException
@@ -41,8 +40,10 @@ import org.apache.commons.io.function.Uncheck;
  */
 public final class UncheckedBufferedReader extends BufferedReader {
 
+    // @formatter:off
     /**
-     * Builds a new {@link UncheckedBufferedReader} instance.
+     * Builds a new {@link UncheckedBufferedReader}.
+     *
      * <p>
      * Using File IO:
      * </p>
@@ -63,28 +64,36 @@ public final class UncheckedBufferedReader extends BufferedReader {
      *   .setCharset(Charset.defaultCharset())
      *   .get();}
      * </pre>
+     *
+     * @see #get()
      */
+    // @formatter:on
     public static class Builder extends AbstractStreamBuilder<UncheckedBufferedReader, Builder> {
 
         /**
-         * Constructs a new instance.
+         * Builds a new {@link UncheckedBufferedReader}.
+         *
          * <p>
-         * This builder use the aspects Reader, Charset, buffer size.
+         * You must set input that supports {@link #getReader()} on this builder, otherwise, this method throws an exception.
          * </p>
          * <p>
-         * You must provide an origin that can be converted to a Reader by this builder, otherwise, this call will throw an
-         * {@link UnsupportedOperationException}.
+         * This builder use the following aspects:
          * </p>
+         * <ul>
+         * <li>{@link #getReader()}</li>
+         * <li>{@link #getBufferSize()}</li>
+         * </ul>
          *
          * @return a new instance.
          * @throws UnsupportedOperationException if the origin cannot provide a Reader.
          * @throws IllegalStateException if the {@code origin} is {@code null}.
-         * @see AbstractOrigin#getReader(Charset)
+         * @see #getReader()
+         * @see #getBufferSize()
          */
         @Override
         public UncheckedBufferedReader get() {
             // This an unchecked class, so this method is as well.
-            return Uncheck.get(() -> new UncheckedBufferedReader(checkOrigin().getReader(getCharset()), getBufferSize()));
+            return Uncheck.get(() -> new UncheckedBufferedReader(getReader(), getBufferSize()));
         }
 
     }

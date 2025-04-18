@@ -35,7 +35,7 @@ import org.apache.commons.io.file.attribute.FileTimes;
  * <em>Serialization is deprecated and will be removed in 3.0.</em>
  * </p>
  */
-class SerializableFileTime implements Serializable {
+final class SerializableFileTime implements Serializable {
 
     static final SerializableFileTime EPOCH = new SerializableFileTime(FileTimes.EPOCH);
 
@@ -68,8 +68,15 @@ class SerializableFileTime implements Serializable {
         return fileTime.hashCode();
     }
 
-    private void readObject(final ObjectInputStream ois) throws ClassNotFoundException, IOException {
-        this.fileTime = FileTime.from((Instant) ois.readObject());
+    /**
+     * Deserializes an instance from an ObjectInputStream.
+     *
+     * @param in The source ObjectInputStream.
+     * @throws IOException            Any of the usual Input/Output related exceptions.
+     * @throws ClassNotFoundException A class of a serialized object cannot be found.
+     */
+    private void readObject(final ObjectInputStream in) throws ClassNotFoundException, IOException {
+        this.fileTime = FileTime.from((Instant) in.readObject());
     }
 
     long to(final TimeUnit unit) {

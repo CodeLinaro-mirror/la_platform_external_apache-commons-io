@@ -43,15 +43,15 @@ import java.nio.file.attribute.BasicFileAttributes;
  * final Path dir = PathUtils.current();
  * final AccumulatorPathVisitor visitor = AccumulatorPathVisitor.withLongCounters(SymbolicLinkFileFilter.INSTANCE);
  * //
- * // Walk one dir
- * Files.<b>walkFileTree</b>(dir, Collections.emptySet(), 1, visitor);
+ * // Walk one directory
+ * Files.<strong>walkFileTree</strong>(dir, Collections.emptySet(), 1, visitor);
  * System.out.println(visitor.getPathCounters());
  * System.out.println(visitor.getFileList());
  * //
  * visitor.getPathCounters().reset();
  * //
- * // Walk dir tree
- * Files.<b>walkFileTree</b>(dir, visitor);
+ * // Walk directory tree
+ * Files.<strong>walkFileTree</strong>(dir, visitor);
  * System.out.println(visitor.getPathCounters());
  * System.out.println(visitor.getDirList());
  * System.out.println(visitor.getFileList());
@@ -71,7 +71,7 @@ public class SymbolicLinkFileFilter extends AbstractFileFilter implements Serial
      * unit test to works around this by doing two things: 1) This separates the class logic from
      * the call to identify a symbolic link, and 2) It allows the unit test to override that
      * symbolic link call on Windows only.
-     * This means we can write unit tests will run on all machines. On Windows, the unit test
+     * This means we can write unit tests that will run on all machines. On Windows, the unit test
      * can't create a symbolic link without admin privileges, so the unit tests won't
      * completely test all the necessary behavior on Windows, but they will still test the class
      * logic. Be careful not to break this, but be aware of it when writing unit tests. You can
@@ -117,10 +117,12 @@ public class SymbolicLinkFileFilter extends AbstractFileFilter implements Serial
     }
 
     /**
-     * Checks to see if the file is a file.
+     * Checks to see if the file is a symbolic link.
      *
      * @param path the File Path to check
-     * @return true if the file exists and is a symbolic link to either another file or a directory.
+     * @param attributes the path's basic attributes (may be null).
+     * @return {@code onAccept} from {@link #SymbolicLinkFileFilter(FileVisitResult, FileVisitResult)} if the file exists and is a symbolic link to either
+     *         another file or a directory; returns {@code onReject} otherwise.
      */
     @Override
     public FileVisitResult accept(final Path path, final BasicFileAttributes attributes) {
