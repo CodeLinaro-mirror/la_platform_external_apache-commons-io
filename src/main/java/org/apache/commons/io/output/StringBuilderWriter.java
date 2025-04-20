@@ -17,26 +17,27 @@
 package org.apache.commons.io.output;
 
 import java.io.Serializable;
+import java.io.StringWriter;
 import java.io.Writer;
 
 /**
  * {@link Writer} implementation that outputs to a {@link StringBuilder}.
  * <p>
- * <strong>NOTE:</strong> This implementation, as an alternative to
- * {@code java.io.StringWriter}, provides an <i>un-synchronized</i>
- * (i.e. for use in a single thread) implementation for better performance.
- * For safe usage with multiple {@link Thread}s then
- * {@code java.io.StringWriter} should be used.
+ * <strong>NOTE:</strong> This implementation, as an alternative to {@link StringWriter}, provides an <em>un-synchronized</em> implementation for better
+ * performance for use in a single thread. For safe usage with multiple {@link Thread}s, a {@link StringWriter} should be used.
  * </p>
  * <h2>Deprecating Serialization</h2>
  * <p>
  * <em>Serialization is deprecated and will be removed in 3.0.</em>
  * </p>
+ *
  * @since 2.0
  */
 public class StringBuilderWriter extends Writer implements Serializable {
 
     private static final long serialVersionUID = -146927496096066153L;
+
+    /** The append target. */
     private final StringBuilder builder;
 
     /**
@@ -120,9 +121,8 @@ public class StringBuilderWriter extends Writer implements Serializable {
         // no-op
     }
 
-
     /**
-     * Returns the underlying builder.
+     * Gets the underlying builder.
      *
      * @return The underlying builder
      */

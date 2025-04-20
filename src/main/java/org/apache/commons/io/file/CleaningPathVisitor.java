@@ -57,7 +57,7 @@ public class CleaningPathVisitor extends CountingPathVisitor {
     private final boolean overrideReadOnly;
 
     /**
-     * Constructs a new visitor that deletes files except for the files and directories explicitly given.
+     * Constructs a instance that deletes files except for the files and directories explicitly given.
      *
      * @param pathCounter How to count visits.
      * @param deleteOption How deletion is handled.
@@ -73,7 +73,7 @@ public class CleaningPathVisitor extends CountingPathVisitor {
     }
 
     /**
-     * Constructs a new visitor that deletes files except for the files and directories explicitly given.
+     * Constructs a new instance that deletes files except for the files and directories explicitly given.
      *
      * @param pathCounter How to count visits.
      * @param skip The files to skip deleting.
@@ -89,7 +89,7 @@ public class CleaningPathVisitor extends CountingPathVisitor {
      * @return true to process the given path, false if not.
      */
     private boolean accept(final Path path) {
-        return Arrays.binarySearch(skip, Objects.toString(path.getFileName(), null)) < 0;
+        return Arrays.binarySearch(skip, PathUtils.getFileNameString(path)) < 0;
     }
 
     @Override

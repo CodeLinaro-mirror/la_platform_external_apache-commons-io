@@ -202,6 +202,7 @@ public class FilenameUtilsTest {
         assertEquals(WINDOWS, FilenameUtils.equalsNormalizedOnSystem("file.txt", "FILE.TXT"));
         assertTrue(FilenameUtils.equalsNormalizedOnSystem("a\\b\\file.txt", "a/b/file.txt"));
         assertFalse(FilenameUtils.equalsNormalizedOnSystem("a/b/", "a/b"));
+        assertFalse(FilenameUtils.equalsNormalizedOnSystem("//a.html", "//ab.html"));
     }
 
     @Test
@@ -406,7 +407,6 @@ public class FilenameUtilsTest {
         assertEquals("a/b/", FilenameUtils.getPath("~/a/b/c.txt"));
         assertEquals("a/b/", FilenameUtils.getPath("~user/a/b/c.txt"));
     }
-
 
     @Test
     public void testGetPath_with_null_character() {
@@ -934,7 +934,7 @@ public class FilenameUtilsTest {
 
     @Test
     public void testNormalizeFromJavaDoc() {
-        // Examples from javadoc
+        // Examples from Javadoc
         assertEquals(SEP + "foo" + SEP, FilenameUtils.normalize("/foo//"));
         assertEquals(SEP + "foo" + SEP, FilenameUtils.normalize(SEP + "foo" + SEP + "." + SEP));
         assertEquals(SEP + "bar", FilenameUtils.normalize(SEP + "foo" + SEP + ".." + SEP + "bar"));

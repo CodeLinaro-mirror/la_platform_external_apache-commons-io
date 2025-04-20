@@ -41,23 +41,26 @@ import org.apache.commons.io.build.AbstractStreamBuilder;
  * </p>
  * <p>
  * The encoding must be specified using either the name of the {@link Charset}, the {@link Charset}, or a {@link CharsetEncoder}. If the default encoding is
- * required then use the {@link java.io.FileWriter} directly, rather than this implementation.
+ * required then use the {@link FileWriter} directly, rather than this implementation.
  * </p>
  * <p>
- * To build an instance, see {@link Builder}.
+ * To build an instance, use {@link Builder}.
  * </p>
  *
+ * @see Builder
  * @since 1.4
  */
 public class FileWriterWithEncoding extends ProxyWriter {
 
+    // @formatter:off
     /**
-     * Builds a new {@link FileWriterWithEncoding} instance.
+     * Builds a new {@link FileWriterWithEncoding}.
+     *
      * <p>
      * Using a CharsetEncoder:
      * </p>
      * <pre>{@code
-     * FileWriterWithEncoding s = FileWriterWithEncoding.builder()
+     * FileWriterWithEncoding w = FileWriterWithEncoding.builder()
      *   .setPath(path)
      *   .setAppend(false)
      *   .setCharsetEncoder(StandardCharsets.UTF_8.newEncoder())
@@ -67,15 +70,17 @@ public class FileWriterWithEncoding extends ProxyWriter {
      * Using a Charset:
      * </p>
      * <pre>{@code
-     * FileWriterWithEncoding s = FileWriterWithEncoding.builder()
+     * FileWriterWithEncoding w = FileWriterWithEncoding.builder()
      *   .setPath(path)
      *   .setAppend(false)
      *   .setCharsetEncoder(StandardCharsets.UTF_8)
      *   .get();}
      * </pre>
      *
+     * @see #get()
      * @since 2.12.0
      */
+    // @formatter:on
     public static class Builder extends AbstractStreamBuilder<FileWriterWithEncoding, Builder> {
 
         private boolean append;
@@ -83,14 +88,18 @@ public class FileWriterWithEncoding extends ProxyWriter {
         private CharsetEncoder charsetEncoder = super.getCharset().newEncoder();
 
         /**
-         * Constructs a new instance.
+         * Builds a new {@link FileWriterWithEncoding}.
          * <p>
-         * This builder use the aspects File, CharsetEncoder, and append.
+         * You must set input that supports {@link File} on this builder, otherwise, this method throws an exception.
          * </p>
          * <p>
-         * You must provide an origin that can be converted to a File by this builder, otherwise, this call will throw an
-         * {@link UnsupportedOperationException}.
+         * This builder use the following aspects:
          * </p>
+         * <ul>
+         * <li>{@link File}</li>
+         * <li>{@link CharsetEncoder}</li>
+         * <li>append</li>
+         * </ul>
          *
          * @return a new instance.
          * @throws UnsupportedOperationException if the origin cannot provide a File.
@@ -104,14 +113,14 @@ public class FileWriterWithEncoding extends ProxyWriter {
                 throw new IllegalStateException(String.format("Mismatched Charset(%s) and CharsetEncoder(%s)", getCharset(), charsetEncoder.charset()));
             }
             final Object encoder = charsetEncoder != null ? charsetEncoder : getCharset();
-            return new FileWriterWithEncoding(FileWriterWithEncoding.initWriter(checkOrigin().getFile(), encoder, append));
+            return new FileWriterWithEncoding(initWriter(checkOrigin().getFile(), encoder, append));
         }
 
         /**
          * Sets whether or not to append.
          *
          * @param append Whether or not to append.
-         * @return this
+         * @return {@code this} instance.
          */
         public Builder setAppend(final boolean append) {
             this.append = append;
@@ -122,7 +131,7 @@ public class FileWriterWithEncoding extends ProxyWriter {
          * Sets charsetEncoder to use for encoding.
          *
          * @param charsetEncoder The charsetEncoder to use for encoding.
-         * @return this
+         * @return {@code this} instance.
          */
         public Builder setCharsetEncoder(final CharsetEncoder charsetEncoder) {
             this.charsetEncoder = charsetEncoder;

@@ -22,7 +22,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
-class TestUtils {
+final class TestUtils {
 
     static int compareAndSetThrowsIO(final AtomicInteger ref, final int update) throws IOException {
         return compareAndSetThrowsIO(ref, 0, update);
@@ -92,6 +92,10 @@ class TestUtils {
     @SuppressWarnings("unchecked")
     static <T, U> IOFunction<T, U> throwingIOFunction() {
         return (IOFunction<T, U>) TestConstants.THROWING_IO_FUNCTION;
+    }
+
+    static IOIntConsumer throwingIOIntConsumer() {
+        return TestConstants.THROWING_IO_INT_CONSUMER;
     }
 
     @SuppressWarnings("unchecked")

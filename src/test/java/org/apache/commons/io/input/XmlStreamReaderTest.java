@@ -49,6 +49,9 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junitpioneer.jupiter.DefaultLocale;
 
+/**
+ * Tests {@link XmlStreamReader}.
+ */
 public class XmlStreamReaderTest {
 
     private static final String ISO_8859_1 = StandardCharsets.ISO_8859_1.name();
@@ -60,6 +63,9 @@ public class XmlStreamReaderTest {
     private static final String UTF_32LE = "UTF-32LE";
     private static final String UTF_32BE = "UTF-32BE";
     private static final String UTF_8 = StandardCharsets.UTF_8.name();
+
+    private static final String XML7 = "xml-prolog-encoding-no-version";
+    private static final String XML6 = "xml-prolog-encoding-new-line";
     private static final String XML5 = "xml-prolog-encoding-spaced-single-quotes";
     private static final String XML4 = "xml-prolog-encoding-single-quotes";
     private static final String XML3 = "xml-prolog-encoding-double-quotes";
@@ -103,6 +109,12 @@ public class XmlStreamReaderTest {
     private static final MessageFormat XML_WITH_PROLOG = new MessageFormat(
             "<?xml version=\"1.0\"?>\n<root>{2}</root>");
 
+    private static final MessageFormat XML_WITH_PROLOG_AND_ENCODING_NEW_LINES = new MessageFormat(
+            "<?xml\nversion\n=\n\"1.0\"\nencoding\n=\n\"{1}\"\n?>\n<root>{2}</root>");
+
+    private static final MessageFormat XML_EXTERNAL_PARSED_ENTITY_NO_VERSION = new MessageFormat(
+            "<?xml\nencoding\n=\n\"{1}\"\n?>\n<root>{2}</root>");
+
     private static final MessageFormat XML_WITH_PROLOG_AND_ENCODING_DOUBLE_QUOTES = new MessageFormat(
             "<?xml version=\"1.0\" encoding=\"{1}\"?>\n<root>{2}</root>");
 
@@ -123,6 +135,8 @@ public class XmlStreamReaderTest {
         XMLs.put(XML3, XML_WITH_PROLOG_AND_ENCODING_DOUBLE_QUOTES);
         XMLs.put(XML4, XML_WITH_PROLOG_AND_ENCODING_SINGLE_QUOTES);
         XMLs.put(XML5, XML_WITH_PROLOG_AND_ENCODING_SPACED_SINGLE_QUOTES);
+        XMLs.put(XML6, XML_WITH_PROLOG_AND_ENCODING_NEW_LINES);
+        XMLs.put(XML7, XML_EXTERNAL_PARSED_ENTITY_NO_VERSION);
     }
 
     /**
@@ -198,7 +212,7 @@ public class XmlStreamReaderTest {
     private void testAlternateDefaultEncoding(final String streamEnc, final String alternateEnc, final XmlStreamReader xmlReader) {
         assertEquals(xmlReader.getDefaultEncoding(), alternateEnc);
         if (!streamEnc.equals(UTF_16)) {
-            // we can not assert things here because UTF-8, US-ASCII and
+            // we cannot assert things here because UTF-8, US-ASCII and
             // ISO-8859-1 look alike for the chars used for detection
             // (niallp 2010-10-06 - I re-instated the check below - the tests(6) passed)
             final String enc = alternateEnc != null ? alternateEnc : streamEnc;
@@ -435,7 +449,7 @@ public class XmlStreamReaderTest {
         try (InputStream is = getXmlInputStream(bomEnc, prologEnc == null ? XML1 : XML3, streamEnc, prologEnc);
             XmlStreamReader xmlReader = new XmlStreamReader(is, cT, false)) {
             if (!streamEnc.equals(UTF_16)) {
-                // we can not assert things here because UTF-8, US-ASCII and
+                // we cannot assert things here because UTF-8, US-ASCII and
                 // ISO-8859-1 look alike for the chars used for detection
                 // (niallp 2010-10-06 - I re-instated the check below and removed the 2 tests that failed)
                 assertEquals(xmlReader.getEncoding(), streamEnc);
@@ -624,5 +638,15 @@ public class XmlStreamReaderTest {
         xmlReader = new XmlStreamReader(is);
         assertEquals(xmlReader.getEncoding(), encoding);
         xmlReader.close();
-    }
+
+        is = getXmlInputStream("no-bom", XML6, encoding, encoding);
+        xmlReader = new XmlStreamReader(is);
+        assertEquals(xmlReader.getEncoding(), encoding);
+        xmlReader.close();
+
+        is = getXmlInputStream("no-bom", XML7, encoding, encoding);
+        xmlReader = new XmlStreamReader(is);
+        assertEquals(xmlReader.getEncoding(), encoding);
+        xmlReader.close();
+}
 }

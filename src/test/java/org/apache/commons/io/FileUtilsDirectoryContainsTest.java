@@ -21,6 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -31,7 +32,6 @@ import org.junit.jupiter.api.io.TempDir;
  * This class ensure the correctness of {@link FileUtils#directoryContains(File,File)}.
  *
  * @see FileUtils#directoryContains(File, File)
- * @since 2.2
  */
 public class FileUtilsDirectoryContainsTest {
 
@@ -115,7 +115,7 @@ public class FileUtilsDirectoryContainsTest {
     public void testDirectoryDoesNotExist() {
         final File dir = new File("DOESNOTEXIST");
         assertFalse(dir.exists());
-        assertThrows(IllegalArgumentException.class, () -> FileUtils.directoryContains(dir, file1));
+        assertThrows(FileNotFoundException.class, () -> FileUtils.directoryContains(dir, file1));
     }
 
     @Test
@@ -168,6 +168,6 @@ public class FileUtilsDirectoryContainsTest {
         final File file = new File(dir, "DOESNOTEXIST2");
         assertFalse(dir.exists());
         assertFalse(file.exists());
-        assertThrows(IllegalArgumentException.class, () -> FileUtils.directoryContains(dir, file));
+        assertThrows(FileNotFoundException.class, () -> FileUtils.directoryContains(dir, file));
     }
 }

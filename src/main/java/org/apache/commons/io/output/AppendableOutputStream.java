@@ -18,13 +18,14 @@ package org.apache.commons.io.output;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.Writer;
 
 /**
  * OutputStream implementation that writes the data to an {@link Appendable}
  * Object.
  * <p>
- * For example, can be used with any {@link java.io.Writer} or a {@link java.lang.StringBuilder}
- * or {@link java.lang.StringBuffer}.
+ * For example, can be used with any {@link Writer} or a {@link StringBuilder}
+ * or {@link StringBuffer}.
  * </p>
  *
  * @since 2.5
@@ -46,7 +47,7 @@ public class AppendableOutputStream <T extends Appendable> extends OutputStream 
     }
 
     /**
-     * Return the target appendable.
+     * Gets the target appendable.
      *
      * @return the target appendable
      */
@@ -62,7 +63,7 @@ public class AppendableOutputStream <T extends Appendable> extends OutputStream 
      */
     @Override
     public void write(final int b) throws IOException {
-        appendable.append((char)b);
+        appendable.append((char) b);
     }
 
 }

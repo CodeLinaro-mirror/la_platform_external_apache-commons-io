@@ -16,7 +16,7 @@
  */
 package org.apache.commons.io.input;
 
-import static org.apache.commons.io.input.ReversedLinesFileReaderTestParamBlockSize.assertEqualsAndNoLineBreaks;
+import static org.apache.commons.io.input.ReversedLinesFileReaderParamBlockSizeTest.assertEqualsAndNoLineBreaks;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -32,14 +32,14 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.TestResources;
 import org.junit.jupiter.api.Test;
 
-public class ReversedLinesFileReaderTestSimple {
+public class ReversedLinesFileReaderSimpleTest {
 
     @Test
     public void testFileSizeIsExactMultipleOfBlockSize() throws URISyntaxException, IOException {
         final int blockSize = 10;
         final File testFile20Bytes = TestResources.getFile("/test-file-20byteslength.bin");
         try (ReversedLinesFileReader reversedLinesFileReader = new ReversedLinesFileReader(testFile20Bytes, blockSize,
-            "ISO-8859-1")) {
+                StandardCharsets.ISO_8859_1.name())) {
             assertEqualsAndNoLineBreaks("987654321", reversedLinesFileReader.readLine());
             assertEqualsAndNoLineBreaks("123456789", reversedLinesFileReader.readLine());
         }
@@ -50,7 +50,7 @@ public class ReversedLinesFileReaderTestSimple {
         final int blockSize = 10;
         final File testFile20Bytes = TestResources.getFile("/test-file-20byteslength.bin");
         try (ReversedLinesFileReader reversedLinesFileReader = new ReversedLinesFileReader(testFile20Bytes, blockSize,
-            "ISO-8859-1")) {
+                StandardCharsets.ISO_8859_1.name())) {
             assertThrows(IllegalArgumentException.class, () -> reversedLinesFileReader.readLines(-1));
             assertTrue(reversedLinesFileReader.readLines(0).isEmpty());
             final List<String> lines = reversedLinesFileReader.readLines(2);
@@ -66,7 +66,7 @@ public class ReversedLinesFileReaderTestSimple {
         final int blockSize = 10;
         final File testFile20Bytes = TestResources.getFile("/test-file-20byteslength.bin");
         try (ReversedLinesFileReader reversedLinesFileReader = new ReversedLinesFileReader(testFile20Bytes, blockSize,
-            "ISO-8859-1")) {
+                StandardCharsets.ISO_8859_1.name())) {
             assertThrows(IllegalArgumentException.class, () -> reversedLinesFileReader.toString(-1));
             assertTrue(reversedLinesFileReader.readLines(0).isEmpty());
             final String lines = reversedLinesFileReader.toString(2);

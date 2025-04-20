@@ -26,7 +26,7 @@ import java.util.function.Predicate;
 /**
  * Test fixtures for this package.
  */
-class TestConstants {
+final class TestConstants {
 
     static final Path ABS_PATH_A = Paths.get("LICENSE.txt").toAbsolutePath();
 
@@ -41,6 +41,8 @@ class TestConstants {
     static IOComparator<Object> THROWING_IO_COMPARATOR = (t, u) -> throwIOException();
 
     static IOConsumer<Object> THROWING_IO_CONSUMER = t -> throwIOException();
+
+    static IOIntConsumer THROWING_IO_INT_CONSUMER = t -> throwIOException();
 
     static IOFunction<Object, Object> THROWING_IO_FUNCTION = t -> throwIOException();
 

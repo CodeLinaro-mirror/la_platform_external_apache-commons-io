@@ -31,20 +31,23 @@ import org.apache.commons.io.build.AbstractStreamBuilder;
  * and provide some additional functionality on top of it usually inherit from this class.
  * </p>
  * <p>
- * To build an instance, see {@link Builder}.
+ * To build an instance, use {@link Builder}.
  * </p>
  * <p>
  * Provenance: Apache Harmony and modified.
  * </p>
  *
+ * @see Builder
  * @see FilterInputStream
  * @since 2.12.0
  */
 //@NotThreadSafe
 public class UnsynchronizedFilterInputStream extends InputStream {
 
+    // @formatter:off
     /**
-     * Builds a new {@link UnsynchronizedFilterInputStream} instance.
+     * Builds a new {@link UnsynchronizedFilterInputStream}.
+     *
      * <p>
      * Using File IO:
      * </p>
@@ -61,21 +64,28 @@ public class UnsynchronizedFilterInputStream extends InputStream {
      *   .setPath(path)
      *   .get();}
      * </pre>
+     *
+     * @see #get()
      */
+    // @formatter:on
     public static class Builder extends AbstractStreamBuilder<UnsynchronizedFilterInputStream, Builder> {
 
         /**
-         * Constructs a new instance.
+         * Builds a new {@link UnsynchronizedFilterInputStream}.
          * <p>
-         * This builder use the aspect InputStream and OpenOption[].
+         * You must set input that supports {@link #getInputStream()}, otherwise, this method throws an exception.
          * </p>
          * <p>
-         * You must provide an origin that can be converted to an InputStream by this builder, otherwise, this call will throw an
-         * {@link UnsupportedOperationException}.
+         * This builder use the following aspects:
          * </p>
+         * <ul>
+         * <li>{@link #getInputStream()}</li>
+         * </ul>
          *
          * @return a new instance.
-         * @throws UnsupportedOperationException if the origin cannot provide an InputStream.
+         * @throws IllegalStateException         if the {@code origin} is {@code null}.
+         * @throws UnsupportedOperationException if the origin cannot be converted to an {@link InputStream}.
+         * @throws IOException                   if an I/O error occurs.
          * @see #getInputStream()
          */
         @SuppressWarnings("resource") // Caller closes.
@@ -131,19 +141,19 @@ public class UnsynchronizedFilterInputStream extends InputStream {
     }
 
     /**
-     * Sets a mark position in this stream. The parameter {@code readlimit} indicates how many bytes can be read before the mark is invalidated. Sending
-     * {@code reset()} will reposition this stream back to the marked position, provided that {@code readlimit} has not been surpassed.
+     * Sets a mark position in this stream. The parameter {@code readLimit} indicates how many bytes can be read before the mark is invalidated. Sending
+     * {@code reset()} will reposition this stream back to the marked position, provided that {@code readLimit} has not been surpassed.
      * <p>
      * This implementation sets a mark in the filtered stream.
      *
-     * @param readlimit the number of bytes that can be read from this stream before the mark is invalidated.
+     * @param readLimit the number of bytes that can be read from this stream before the mark is invalidated.
      * @see #markSupported()
      * @see #reset()
      */
     @SuppressWarnings("sync-override") // by design.
     @Override
-    public void mark(final int readlimit) {
-        inputStream.mark(readlimit);
+    public void mark(final int readLimit) {
+        inputStream.mark(readLimit);
     }
 
     /**
@@ -204,7 +214,7 @@ public class UnsynchronizedFilterInputStream extends InputStream {
     /**
      * Resets this stream to the last marked location. This implementation resets the target stream.
      *
-     * @throws IOException if this stream is already closed, no mark has been set or the mark is no longer valid because more than {@code readlimit} bytes have
+     * @throws IOException if this stream is already closed, no mark has been set or the mark is no longer valid because more than {@code readLimit} bytes have
      *                     been read since setting the mark.
      * @see #mark(int)
      * @see #markSupported()

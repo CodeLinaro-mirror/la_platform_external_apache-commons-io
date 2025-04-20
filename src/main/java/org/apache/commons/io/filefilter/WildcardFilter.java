@@ -27,6 +27,7 @@ import java.util.Objects;
 import java.util.stream.Stream;
 
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.io.file.PathUtils;
 
 /**
  * Filters files using the supplied wildcards.
@@ -59,15 +60,15 @@ import org.apache.commons.io.FilenameUtils;
  * final Path dir = PathUtils.current();
  * final AccumulatorPathVisitor visitor = AccumulatorPathVisitor.withLongCounters(new WildcardFilter("*test*.java~*~"));
  * //
- * // Walk one dir
- * Files.<b>walkFileTree</b>(dir, Collections.emptySet(), 1, visitor);
+ * // Walk one directory
+ * Files.<strong>walkFileTree</strong>(dir, Collections.emptySet(), 1, visitor);
  * System.out.println(visitor.getPathCounters());
  * System.out.println(visitor.getFileList());
  * //
  * visitor.getPathCounters().reset();
  * //
- * // Walk dir tree
- * Files.<b>walkFileTree</b>(dir, visitor);
+ * // Walk directory tree
+ * Files.<strong>walkFileTree</strong>(dir, visitor);
  * System.out.println(visitor.getPathCounters());
  * System.out.println(visitor.getDirList());
  * System.out.println(visitor.getFileList());
@@ -154,18 +155,19 @@ public class WildcardFilter extends AbstractFileFilter implements Serializable {
 
     /**
      * Checks to see if the file name matches one of the wildcards.
-     * @param file the file to check
      *
+     * @param path the file to check
+     * @param attributes the path's basic attributes (may be null).
      * @return true if the file name matches one of the wildcards
      * @since 2.9.0
      */
     @Override
-    public FileVisitResult accept(final Path file, final BasicFileAttributes attributes) {
-        if (Files.isDirectory(file)) {
+    public FileVisitResult accept(final Path path, final BasicFileAttributes attributes) {
+        if (Files.isDirectory(path)) {
             return FileVisitResult.TERMINATE;
         }
         return toDefaultFileVisitResult(
-                Stream.of(wildcards).anyMatch(wildcard -> FilenameUtils.wildcardMatch(Objects.toString(file.getFileName(), null), wildcard)));
+                Stream.of(wildcards).anyMatch(wildcard -> FilenameUtils.wildcardMatch(PathUtils.getFileNameString(path), wildcard)));
 
     }
 

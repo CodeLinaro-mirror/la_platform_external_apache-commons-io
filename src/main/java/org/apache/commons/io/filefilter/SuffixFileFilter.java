@@ -26,6 +26,7 @@ import java.util.Objects;
 import java.util.stream.Stream;
 
 import org.apache.commons.io.IOCase;
+import org.apache.commons.io.file.PathUtils;
 
 /**
  * Filters files based on the suffix (what the file name ends with).
@@ -48,15 +49,15 @@ import org.apache.commons.io.IOCase;
  * final Path dir = PathUtils.current();
  * final AccumulatorPathVisitor visitor = AccumulatorPathVisitor.withLongCounters(new SuffixFileFilter(".java"));
  * //
- * // Walk one dir
- * Files.<b>walkFileTree</b>(dir, Collections.emptySet(), 1, visitor);
+ * // Walk one directory
+ * Files.<strong>walkFileTree</strong>(dir, Collections.emptySet(), 1, visitor);
  * System.out.println(visitor.getPathCounters());
  * System.out.println(visitor.getFileList());
  * //
  * visitor.getPathCounters().reset();
  * //
- * // Walk dir tree
- * Files.<b>walkFileTree</b>(dir, visitor);
+ * // Walk directory tree
+ * Files.<strong>walkFileTree</strong>(dir, visitor);
  * System.out.println(visitor.getPathCounters());
  * System.out.println(visitor.getDirList());
  * System.out.println(visitor.getFileList());
@@ -122,6 +123,7 @@ public class SuffixFileFilter extends AbstractFileFilter implements Serializable
      * <p>
      * The array is not cloned, so could be changed after constructing the
      * instance. This would be inadvisable however.
+     * </p>
      *
      * @param suffixes  the suffixes to allow, must not be null
      * @throws NullPointerException if the suffix array is null
@@ -185,14 +187,15 @@ public class SuffixFileFilter extends AbstractFileFilter implements Serializable
 
     /**
      * Checks to see if the file name ends with the suffix.
-     * @param file  the File to check
      *
+     * @param path       the File to check
+     * @param attributes the path's basic attributes (may be null).
      * @return true if the file name ends with one of our suffixes
      * @since 2.9.0
      */
     @Override
-    public FileVisitResult accept(final Path file, final BasicFileAttributes attributes) {
-        return toFileVisitResult(accept(Objects.toString(file.getFileName(), null)));
+    public FileVisitResult accept(final Path path, final BasicFileAttributes attributes) {
+        return toFileVisitResult(accept(PathUtils.getFileNameString(path)));
     }
 
     private boolean accept(final String name) {

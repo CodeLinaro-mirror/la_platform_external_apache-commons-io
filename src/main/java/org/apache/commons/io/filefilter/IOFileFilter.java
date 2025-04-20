@@ -27,7 +27,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import org.apache.commons.io.file.PathFilter;
 
 /**
- * An interface which brings the FileFilter, FilenameFilter, and PathFilter interfaces together.
+ * An interface which brings the {@link FileFilter}, {@link FilenameFilter}, {@link PathFilter}, and {@link PathMatcher} interfaces together.
  *
  * @since 1.0
  */
@@ -41,7 +41,7 @@ public interface IOFileFilter extends FileFilter, FilenameFilter, PathFilter, Pa
     /**
      * Tests if a File should be accepted by this filter.
      * <p>
-     * Defined in {@link java.io.FileFilter}.
+     * Defined in {@link FileFilter}.
      * </p>
      *
      * @param file the File to check.
@@ -53,10 +53,10 @@ public interface IOFileFilter extends FileFilter, FilenameFilter, PathFilter, Pa
     /**
      * Tests if a File should be accepted by this filter.
      * <p>
-     * Defined in {@link java.io.FilenameFilter}.
+     * Defined in {@link FilenameFilter}.
      * </p>
      *
-     * @param dir the directory File to check.
+     * @param dir  the directory File to check.
      * @param name the file name within the directory to check.
      * @return true if this file matches the test.
      */
@@ -67,6 +67,7 @@ public interface IOFileFilter extends FileFilter, FilenameFilter, PathFilter, Pa
      * Checks to see if a Path should be accepted by this filter.
      *
      * @param path the Path to check.
+     * @param attributes the path's basic attributes (may be null).
      * @return true if this path matches the test.
      * @since 2.9.0
      */

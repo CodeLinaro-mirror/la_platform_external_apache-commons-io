@@ -24,14 +24,21 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 /**
- * Helps with different endian systems.
+ * Helps with reading and writing primitive numeric types ({@code short},
+ * {@code int}, {@code long}, {@code float}, and {@code double}) that are
+ * encoded in little endian using two's complement or unsigned representations.
  * <p>
- * Different computer architectures adopt different conventions for
- * byte ordering. In so-called "Little Endian" architectures (eg Intel),
+ * Different computer architectures have different conventions for
+ * byte ordering. In "Little Endian" architectures (e.g. X86),
  * the low-order byte is stored in memory at the lowest address, and
- * subsequent bytes at higher addresses. For "Big Endian" architectures
- * (eg Motorola), the situation is reversed.
- * This class helps you solve this incompatibility.
+ * subsequent bytes at higher addresses. In "Big Endian" architectures
+ * (e.g. Motorola 680X0), the situation is reversed.
+ * Most methods and classes throughout Java &mdash; e.g. {@code DataInputStream} and
+ * {@code Double.longBitsToDouble()} &mdash; assume data is laid out
+ * in big endian order with the most significant byte first.
+ * The methods in this class read and write data in little endian order,
+ * generally by reversing the bytes and then using the
+ * regular Java methods to convert the swapped bytes to a primitive type.
  * </p>
  * <p>
  * Provenance: Excalibur
@@ -56,19 +63,20 @@ public class EndianUtils {
     }
 
     /**
-     * Reads a "double" value from a byte array at a given offset. The value is
-     * converted to the opposed endian system while reading.
+     * Reads a little endian {@code double} value from a byte array at a given offset.
+     *
      * @param data source byte array
      * @param offset starting offset in the byte array
      * @return the value read
+     * @throws IllegalArgumentException if the part of the byte array starting at offset does not have at least 8 bytes
      */
     public static double readSwappedDouble(final byte[] data, final int offset) {
         return Double.longBitsToDouble(readSwappedLong(data, offset));
     }
 
     /**
-     * Reads a "double" value from an InputStream. The value is
-     * converted to the opposed endian system while reading.
+     * Reads a little endian {@code double} value from an InputStream.
+     *
      * @param input source InputStream
      * @return the value just read
      * @throws IOException in case of an I/O problem
@@ -78,19 +86,20 @@ public class EndianUtils {
     }
 
     /**
-     * Reads a "float" value from a byte array at a given offset. The value is
-     * converted to the opposed endian system while reading.
+     * Reads a little endian {@code float} value from a byte array at a given offset.
+     *
      * @param data source byte array
      * @param offset starting offset in the byte array
      * @return the value read
+     * @throws IllegalArgumentException if the part of the byte array starting at offset does not have at least 4 bytes
      */
     public static float readSwappedFloat(final byte[] data, final int offset) {
         return Float.intBitsToFloat(readSwappedInteger(data, offset));
     }
 
     /**
-     * Reads a "float" value from an InputStream. The value is
-     * converted to the opposed endian system while reading.
+     * Reads a little endian {@code float} value from an InputStream.
+     *
      * @param input source InputStream
      * @return the value just read
      * @throws IOException in case of an I/O problem
@@ -100,13 +109,15 @@ public class EndianUtils {
     }
 
     /**
-     * Reads an "int" value from a byte array at a given offset. The value is
-     * converted to the opposed endian system while reading.
+     * Reads a little endian {@code int} value from a byte array at a given offset.
+     *
      * @param data source byte array
      * @param offset starting offset in the byte array
      * @return the value read
+     * @throws IllegalArgumentException if the part of the byte array starting at offset does not have at least 4 bytes
      */
     public static int readSwappedInteger(final byte[] data, final int offset) {
+        validateByteArrayOffset(data, offset, Integer.SIZE / Byte.SIZE);
         return ((data[offset + 0] & 0xff) << 0) +
             ((data[offset + 1] & 0xff) << 8) +
             ((data[offset + 2] & 0xff) << 16) +
@@ -114,8 +125,8 @@ public class EndianUtils {
     }
 
     /**
-     * Reads an "int" value from an InputStream. The value is
-     * converted to the opposed endian system while reading.
+     * Reads a little endian {@code int} value from an InputStream.
+     *
      * @param input source InputStream
      * @return the value just read
      * @throws IOException in case of an I/O problem
@@ -129,21 +140,23 @@ public class EndianUtils {
     }
 
     /**
-     * Reads a "long" value from a byte array at a given offset. The value is
-     * converted to the opposed endian system while reading.
+     * Reads a little endian {@code long} value from a byte array at a given offset.
+     *
      * @param data source byte array
      * @param offset starting offset in the byte array
      * @return the value read
+     * @throws IllegalArgumentException if the part of the byte array starting at offset does not have at least 8 bytes
      */
     public static long readSwappedLong(final byte[] data, final int offset) {
+        validateByteArrayOffset(data, offset, Long.SIZE / Byte.SIZE);
         final long low = readSwappedInteger(data, offset);
         final long high = readSwappedInteger(data, offset + 4);
         return (high << 32) + (0xffffffffL & low);
     }
 
     /**
-     * Reads a "long" value from an InputStream. The value is
-     * converted to the opposed endian system while reading.
+     * Reads a little endian {@code long} value from an InputStream.
+     *
      * @param input source InputStream
      * @return the value just read
      * @throws IOException in case of an I/O problem
@@ -157,20 +170,21 @@ public class EndianUtils {
     }
 
     /**
-     * Reads a "short" value from a byte array at a given offset. The value is
-     * converted to the opposed endian system while reading.
+     * Reads a little endian {@code short} value from a byte array at a given offset.
+     *
      * @param data source byte array
      * @param offset starting offset in the byte array
      * @return the value read
+     * @throws IllegalArgumentException if the part of the byte array starting at offset does not have at least 2 bytes
      */
     public static short readSwappedShort(final byte[] data, final int offset) {
-        return (short)(((data[offset + 0] & 0xff) << 0) +
-            ((data[offset + 1] & 0xff) << 8));
+        validateByteArrayOffset(data, offset, Short.SIZE / Byte.SIZE);
+        return (short) (((data[offset + 0] & 0xff) << 0) + ((data[offset + 1] & 0xff) << 8));
     }
 
     /**
-     * Reads a "short" value from an InputStream. The value is
-     * converted to the opposed endian system while reading.
+     * Reads a little endian {@code short} value from an InputStream.
+     *
      * @param input source InputStream
      * @return the value just read
      * @throws IOException in case of an I/O problem
@@ -180,14 +194,16 @@ public class EndianUtils {
     }
 
     /**
-     * Reads an unsigned integer (32-bit) value from a byte array at a given
-     * offset. The value is converted to the opposed endian system while
-     * reading.
+     * Reads a little endian unsigned integer (32-bit) value from a byte array at a given
+     * offset.
+     *
      * @param data source byte array
      * @param offset starting offset in the byte array
      * @return the value read
-     */
+     * @throws IllegalArgumentException if the part of the byte array starting at offset does not have at least 4 bytes
+    */
     public static long readSwappedUnsignedInteger(final byte[] data, final int offset) {
+        validateByteArrayOffset(data, offset, Integer.SIZE / Byte.SIZE);
         final long low = ((data[offset + 0] & 0xff) << 0) +
                      ((data[offset + 1] & 0xff) << 8) +
                      ((data[offset + 2] & 0xff) << 16);
@@ -196,8 +212,8 @@ public class EndianUtils {
     }
 
     /**
-     * Reads an unsigned integer (32-bit) from an InputStream. The value is
-     * converted to the opposed endian system while reading.
+     * Reads a little endian unsigned integer (32-bit) from an InputStream.
+     *
      * @param input source InputStream
      * @return the value just read
      * @throws IOException in case of an I/O problem
@@ -213,21 +229,22 @@ public class EndianUtils {
     }
 
     /**
-     * Reads an unsigned short (16-bit) value from a byte array at a given
-     * offset. The value is converted to the opposed endian system while
-     * reading.
+     * Reads an unsigned short (16-bit) value from a byte array in little endian order at a given
+     * offset.
+     *
      * @param data source byte array
      * @param offset starting offset in the byte array
      * @return the value read
+     * @throws IllegalArgumentException if the part of the byte array starting at offset does not have at least 2 bytes
      */
     public static int readSwappedUnsignedShort(final byte[] data, final int offset) {
-        return ((data[offset + 0] & 0xff) << 0) +
-            ((data[offset + 1] & 0xff) << 8);
+        validateByteArrayOffset(data, offset, Short.SIZE / Byte.SIZE);
+        return ((data[offset + 0] & 0xff) << 0) + ((data[offset + 1] & 0xff) << 8);
     }
 
     /**
-     * Reads an unsigned short (16-bit) from an InputStream. The value is
-     * converted to the opposed endian system while reading.
+     * Reads an unsigned short (16-bit) from an InputStream in little endian order.
+     *
      * @param input source InputStream
      * @return the value just read
      * @throws IOException in case of an I/O problem
@@ -240,7 +257,12 @@ public class EndianUtils {
     }
 
     /**
-     * Converts a "double" value between endian systems.
+     * Converts a {@code double} value from big endian to little endian
+     * and vice versa. That is, it converts the {@code double} to bytes,
+     * reverses the bytes, and then reinterprets those bytes as a new {@code double}.
+     * This can be useful if you have a number that was read from the
+     * underlying source in the wrong endianness.
+     *
      * @param value value to convert
      * @return the converted value
      */
@@ -249,7 +271,8 @@ public class EndianUtils {
     }
 
     /**
-     * Converts a "float" value between endian systems.
+     * Converts a {@code float} value from big endian to little endian and vice versa.
+     *
      * @param value value to convert
      * @return the converted value
      */
@@ -258,7 +281,8 @@ public class EndianUtils {
     }
 
     /**
-     * Converts an "int" value between endian systems.
+     * Converts an {@code int} value from big endian to little endian and vice versa.
+     *
      * @param value value to convert
      * @return the converted value
      */
@@ -271,7 +295,8 @@ public class EndianUtils {
     }
 
     /**
-     * Converts a "long" value between endian systems.
+     * Converts a {@code long} value from big endian to little endian and vice versa.
+     *
      * @param value value to convert
      * @return the converted value
      */
@@ -288,7 +313,8 @@ public class EndianUtils {
     }
 
     /**
-     * Converts a "short" value between endian systems.
+     * Converts a {@code short} value from big endian to little endian and vice versa.
+     *
      * @param value value to convert
      * @return the converted value
      */
@@ -298,19 +324,34 @@ public class EndianUtils {
     }
 
     /**
-     * Writes a "double" value to a byte array at a given offset. The value is
-     * converted to the opposed endian system while writing.
+     * Validates if the provided byte array has enough data.
+     *
+     * @param data the input byte array
+     * @param offset the input offset
+     * @param byteNeeded the needed number of bytes
+     * @throws IllegalArgumentException if the byte array does not have enough data
+     */
+    private static void validateByteArrayOffset(final byte[] data, final int offset, final int byteNeeded) {
+        if (data.length < offset + byteNeeded) {
+            throw new IllegalArgumentException("Data only has " + data.length + "bytes, needed " + (offset + byteNeeded) + "bytes.");
+        }
+    }
+
+    /**
+     * Writes the 8 bytes of a {@code double} to a byte array at a given offset in little endian order.
+     *
      * @param data target byte array
      * @param offset starting offset in the byte array
      * @param value value to write
+     * @throws IllegalArgumentException if the part of the byte array starting at offset does not have at least 8 bytes
      */
     public static void writeSwappedDouble(final byte[] data, final int offset, final double value) {
         writeSwappedLong(data, offset, Double.doubleToLongBits(value));
     }
 
     /**
-     * Writes a "double" value to an OutputStream. The value is
-     * converted to the opposed endian system while writing.
+     * Writes the 8 bytes of a {@code double} to an output stream in little endian order.
+     *
      * @param output target OutputStream
      * @param value value to write
      * @throws IOException in case of an I/O problem
@@ -320,35 +361,38 @@ public class EndianUtils {
     }
 
     /**
-     * Writes a "float" value to a byte array at a given offset. The value is
-     * converted to the opposed endian system while writing.
+     * Writes the 4 bytes of a {@code float} to a byte array at a given offset in little endian order.
+     *
      * @param data target byte array
      * @param offset starting offset in the byte array
      * @param value value to write
+     * @throws IllegalArgumentException if the part of the byte array starting at offset does not have at least 4 bytes
      */
     public static void writeSwappedFloat(final byte[] data, final int offset, final float value) {
         writeSwappedInteger(data, offset, Float.floatToIntBits(value));
     }
 
     /**
-     * Writes a "float" value to an OutputStream. The value is
-     * converted to the opposed endian system while writing.
+     * Writes the 4 bytes of a {@code float} to an output stream in little endian order.
+     *
      * @param output target OutputStream
      * @param value value to write
      * @throws IOException in case of an I/O problem
-     */
+    */
     public static void writeSwappedFloat(final OutputStream output, final float value) throws IOException {
         writeSwappedInteger(output, Float.floatToIntBits(value));
     }
 
     /**
-     * Writes an "int" value to a byte array at a given offset. The value is
-     * converted to the opposed endian system while writing.
+     * Writes the 4 bytes of an {@code int} to a byte array at a given offset in little endian order.
+     *
      * @param data target byte array
      * @param offset starting offset in the byte array
      * @param value value to write
+     * @throws IllegalArgumentException if the part of the byte array starting at offset does not have at least 4 bytes
      */
     public static void writeSwappedInteger(final byte[] data, final int offset, final int value) {
+        validateByteArrayOffset(data, offset, Integer.SIZE / Byte.SIZE);
         data[offset + 0] = (byte) (value >> 0 & 0xff);
         data[offset + 1] = (byte) (value >> 8 & 0xff);
         data[offset + 2] = (byte) (value >> 16 & 0xff);
@@ -356,7 +400,7 @@ public class EndianUtils {
     }
 
     /**
-     * Writes an "int" value to an OutputStream. The value is converted to the opposed endian system while writing.
+     * Writes the 4 bytes of an {@code int} to an output stream in little endian order.
      *
      * @param output target OutputStream
      * @param value value to write
@@ -370,13 +414,15 @@ public class EndianUtils {
     }
 
     /**
-     * Writes a "long" value to a byte array at a given offset. The value is
-     * converted to the opposed endian system while writing.
+     * Writes the 8 bytes of a {@code long} to a byte array at a given offset in little endian order.
+     *
      * @param data target byte array
      * @param offset starting offset in the byte array
      * @param value value to write
+     * @throws IllegalArgumentException if the part of the byte array starting at offset does not have at least 8 bytes
      */
     public static void writeSwappedLong(final byte[] data, final int offset, final long value) {
+        validateByteArrayOffset(data, offset, Long.SIZE / Byte.SIZE);
         data[offset + 0] = (byte) (value >> 0 & 0xff);
         data[offset + 1] = (byte) (value >> 8 & 0xff);
         data[offset + 2] = (byte) (value >> 16 & 0xff);
@@ -388,8 +434,8 @@ public class EndianUtils {
     }
 
     /**
-     * Writes a "long" value to an OutputStream. The value is
-     * converted to the opposed endian system while writing.
+     * Writes the 8 bytes of a {@code long} to an output stream in little endian order.
+     *
      * @param output target OutputStream
      * @param value value to write
      * @throws IOException in case of an I/O problem
@@ -406,20 +452,22 @@ public class EndianUtils {
     }
 
     /**
-     * Writes a "short" value to a byte array at a given offset. The value is
-     * converted to the opposed endian system while writing.
+     * Writes the 2 bytes of a {@code short} to a byte array at a given offset in little endian order.
+     *
      * @param data target byte array
      * @param offset starting offset in the byte array
      * @param value value to write
+     * @throws IllegalArgumentException if the part of the byte array starting at offset does not have at least 2 bytes
      */
     public static void writeSwappedShort(final byte[] data, final int offset, final short value) {
-        data[offset + 0] = (byte)(value >> 0 & 0xff);
-        data[offset + 1] = (byte)(value >> 8 & 0xff);
+        validateByteArrayOffset(data, offset, Short.SIZE / Byte.SIZE);
+        data[offset + 0] = (byte) (value >> 0 & 0xff);
+        data[offset + 1] = (byte) (value >> 8 & 0xff);
     }
 
     /**
-     * Writes a "short" value to an OutputStream. The value is
-     * converted to the opposed endian system while writing.
+     * Writes the 2 bytes of a {@code short} to an output stream using little endian encoding.
+     *
      * @param output target OutputStream
      * @param value value to write
      * @throws IOException in case of an I/O problem
@@ -431,7 +479,11 @@ public class EndianUtils {
 
     /**
      * Instances should NOT be constructed in standard programming.
+     *
+     * @deprecated TODO Make private in 3.0.
      */
+    @Deprecated
     public EndianUtils() {
+        // empty
     }
 }
