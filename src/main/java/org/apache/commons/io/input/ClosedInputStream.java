@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -60,9 +60,16 @@ public class ClosedInputStream extends InputStream {
     }
 
     /**
-     * Returns -1 to indicate that the stream is closed.
+     * Constructs a new instance.
+     */
+    public ClosedInputStream() {
+        // empty
+    }
+
+    /**
+     * Returns {@code -1} to indicate that the stream is closed.
      *
-     * @return always -1
+     * @return always {@code -1}.
      */
     @Override
     public int read() {
@@ -70,12 +77,12 @@ public class ClosedInputStream extends InputStream {
     }
 
     /**
-     * Returns -1 to indicate that the stream is closed.
+     * Returns {@code -1} to indicate that the stream is closed.
      *
      * @param b ignored.
      * @param off ignored.
      * @param len ignored.
-     * @return always -1
+     * @return always -1.
      */
     @Override
     public int read(final byte[] b, final int off, final int len) throws IOException {

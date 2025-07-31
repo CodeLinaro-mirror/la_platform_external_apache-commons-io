@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -23,9 +23,9 @@ import java.io.IOException;
 import java.io.InputStream;
 
 /**
- * A light weight {@link InputStream} that emulates a stream of a specified size.
+ * A lightweight {@link InputStream} that emulates a stream of a specified size.
  * <p>
- * This implementation provides a light weight object for testing with an {@link InputStream} where the contents don't matter.
+ * This implementation provides a lightweight object for testing with an {@link InputStream} where the contents don't matter.
  * </p>
  * <p>
  * One use case would be for testing the handling of large {@link InputStream} as it can emulate that scenario without the overhead of actually processing large
@@ -54,6 +54,9 @@ import java.io.InputStream;
  *      }
  *  }
  * </pre>
+ * <p>
+ * This class is not thread-safe.
+ * </p>
  *
  * @since 1.3
  */
@@ -223,6 +226,7 @@ public class NullInputStream extends AbstractInputStream {
      * Returns a byte value for the {@code read()} method.
      * <p>
      * This implementation returns zero.
+     * </p>
      *
      * @return This implementation always returns zero.
      */
