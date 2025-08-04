@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -108,7 +108,7 @@ public class WriterOutputStream extends OutputStream {
         private boolean writeImmediately;
 
         /**
-         * Constructs a new Builder.
+         * Constructs a new builder of {@link WriterOutputStream}.
          */
         public Builder() {
             this.charsetDecoder = getCharset().newDecoder();
@@ -117,10 +117,10 @@ public class WriterOutputStream extends OutputStream {
         /**
          * Builds a new {@link WriterOutputStream}.
          * <p>
-         * You must set input that supports {@link #getWriter()} on this builder, otherwise, this method throws an exception.
+         * You must set an aspect that supports {@link #getWriter()} on this builder, otherwise, this method throws an exception.
          * </p>
          * <p>
-         * This builder use the following aspects:
+         * This builder uses the following aspects:
          * </p>
          * <ul>
          * <li>{@link #getWriter()}</li>
@@ -130,13 +130,14 @@ public class WriterOutputStream extends OutputStream {
          * </ul>
          *
          * @return a new instance.
-         * @throws UnsupportedOperationException if the origin cannot provide a Writer.
+         * @throws UnsupportedOperationException if the origin cannot provide a {@link Writer}.
+         * @throws IOException                   if an I/O error occurs converting to an {@link Writer} using {@link #getWriter()}.
          * @see #getWriter()
+         * @see #getUnchecked()
          */
-        @SuppressWarnings("resource")
         @Override
         public WriterOutputStream get() throws IOException {
-            return new WriterOutputStream(getWriter(), charsetDecoder, getBufferSize(), writeImmediately);
+            return new WriterOutputStream(this);
         }
 
         @Override
@@ -244,9 +245,15 @@ public class WriterOutputStream extends OutputStream {
      */
     private final CharBuffer decoderOut;
 
+    @SuppressWarnings("resource") // caller closes.
+    private WriterOutputStream(final Builder builder) throws IOException {
+        this(builder.getWriter(), builder.charsetDecoder, builder.getBufferSize(), builder.writeImmediately);
+    }
+
     /**
-     * Constructs a new {@link WriterOutputStream} that uses the default character encoding and with a default output buffer size of {@value #BUFFER_SIZE}
-     * characters. The output buffer will only be flushed when it overflows or when {@link #flush()} or {@link #close()} is called.
+     * Constructs a new {@link WriterOutputStream} that uses the virtual machine's {@link Charset#defaultCharset() default charset} and with a default output
+     * buffer size of {@value #BUFFER_SIZE} characters. The output buffer will only be flushed when it overflows or when {@link #flush()} or {@link #close()} is
+     * called.
      *
      * @param writer the target {@link Writer}
      * @deprecated Use {@link #builder()}, {@link Builder}, and {@link Builder#get()}
@@ -421,7 +428,7 @@ public class WriterOutputStream extends OutputStream {
     }
 
     /**
-     * Write bytes from the specified byte array to the stream.
+     * Writes bytes from the specified byte array to the stream.
      *
      * @param b the byte array containing the bytes to write
      * @throws IOException if an I/O error occurs.
@@ -432,7 +439,7 @@ public class WriterOutputStream extends OutputStream {
     }
 
     /**
-     * Write bytes from the specified byte array to the stream.
+     * Writes bytes from the specified byte array to the stream.
      *
      * @param b   the byte array containing the bytes to write
      * @param off the start offset in the byte array
@@ -454,7 +461,7 @@ public class WriterOutputStream extends OutputStream {
     }
 
     /**
-     * Write a single byte to the stream.
+     * Writes a single byte to the stream.
      *
      * @param b the byte to write
      * @throws IOException if an I/O error occurs.

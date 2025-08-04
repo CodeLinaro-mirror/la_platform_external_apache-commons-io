@@ -7,7 +7,7 @@
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
  *
- *   http://www.apache.org/licenses/LICENSE-2.0
+ *   https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
  * software distributed under the License is distributed on an
@@ -107,7 +107,7 @@ public class ValidatingObjectInputStream extends ObjectInputStream {
         private ObjectStreamClassPredicate predicate = new ObjectStreamClassPredicate();
 
         /**
-         * Constructs a new instance.
+         * Constructs a new builder of {@link ValidatingObjectInputStream}.
          *
          * @deprecated Use {@link #builder()}.
          */
@@ -165,9 +165,30 @@ public class ValidatingObjectInputStream extends ObjectInputStream {
             return this;
         }
 
+        /**
+         * Builds a new {@link ValidatingObjectInputStream}.
+         * <p>
+         * You must set an aspect that supports {@link #getInputStream()} on this builder, otherwise, this method throws an exception.
+         * </p>
+         * <p>
+         * This builder uses the following aspects:
+         * </p>
+         * <ul>
+         * <li>{@link #getInputStream()} gets the target aspect.</li>
+         * <li>predicate</li>
+         * <li>charsetDecoder</li>
+         * <li>writeImmediately</li>
+         * </ul>
+         *
+         * @return a new instance.
+         * @throws UnsupportedOperationException if the origin cannot provide a {@link InputStream}.
+         * @throws IOException                   if an I/O error occurs converting to an {@link InputStream} using {@link #getInputStream()}.
+         * @see #getWriter()
+         * @see #getUnchecked()
+         */
         @Override
         public ValidatingObjectInputStream get() throws IOException {
-            return new ValidatingObjectInputStream(getInputStream(), predicate);
+            return new ValidatingObjectInputStream(this);
         }
 
         /**
@@ -254,6 +275,11 @@ public class ValidatingObjectInputStream extends ObjectInputStream {
     }
 
     private final ObjectStreamClassPredicate predicate;
+
+    @SuppressWarnings("resource") // caller closes/
+    private ValidatingObjectInputStream(final Builder builder) throws IOException {
+        this(builder.getInputStream(), builder.predicate);
+    }
 
     /**
      * Constructs an instance to deserialize the specified input stream. At least one accept method needs to be called to specify which classes can be
