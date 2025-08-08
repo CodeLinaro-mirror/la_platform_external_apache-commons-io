@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -176,7 +176,7 @@ public abstract class AbstractOriginSupplier<T, B extends AbstractOriginSupplier
      * Constructs a new writer origin for a file.
      *
      * @param origin the writer.
-     * @return a new writer .
+     * @return a new writer.
      */
     protected static WriterOrigin newWriterOrigin(final Writer origin) {
         return new WriterOrigin(origin);
@@ -186,6 +186,13 @@ public abstract class AbstractOriginSupplier<T, B extends AbstractOriginSupplier
      * The underlying origin.
      */
     private AbstractOrigin<?, ?> origin;
+
+    /**
+     * Constructs a new instance for subclasses.
+     */
+    public AbstractOriginSupplier() {
+        // empty
+    }
 
     /**
      * Checks whether the origin is null.

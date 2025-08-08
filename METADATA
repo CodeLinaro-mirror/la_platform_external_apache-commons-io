@@ -7,17 +7,17 @@ description: "The Apache Commons IO library contains utility classes, stream imp
 third_party {
   license_type: NOTICE
   security {
-    tag: "NVD-CPE2.3:cpe:/a:apache:commons_io:2.18.0"
+    tag: "NVD-CPE2.3:cpe:/a:apache:commons_io:2.20.0"
   }
   last_upgrade_date {
     year: 2025
-    month: 4
-    day: 8
+    month: 7
+    day: 31
   }
   homepage: "https://commons.apache.org/proper/commons-io/"
   identifier {
     type: "Git"
     value: "https://github.com/apache/commons-io.git"
-    version: "rel/commons-io-2.18.0"
+    version: "rel/commons-io-2.20.0"
   }
 }
