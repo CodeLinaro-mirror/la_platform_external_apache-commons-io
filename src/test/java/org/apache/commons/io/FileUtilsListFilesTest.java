@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -50,7 +50,7 @@ import org.junit.jupiter.api.io.TempDir;
 /**
  * Tests FileUtils.listFiles() methods.
  */
-public class FileUtilsListFilesTest {
+class FileUtilsListFilesTest {
 
     @TempDir
     public File temporaryFolder;
@@ -90,7 +90,7 @@ public class FileUtilsListFilesTest {
     }
 
     @Test
-    public void testIterateFilesByExtension() {
+    void testIterateFilesByExtension() {
         final String[] extensions = { "xml", "txt" };
 
         Iterator<File> files = FileUtils.iterateFiles(temporaryFolder, extensions, false);
@@ -130,7 +130,7 @@ public class FileUtilsListFilesTest {
     }
 
     @Test
-    public void testListFiles() {
+    void testListFiles() {
         Collection<File> files;
         Collection<String> fileNames;
         IOFileFilter fileFilter;
@@ -176,7 +176,7 @@ public class FileUtilsListFilesTest {
     }
 
     @Test
-    public void testListFilesByExtension() {
+    void testListFilesByExtension() {
         final String[] extensions = {"xml", "txt"};
 
         Collection<File> files = FileUtils.listFiles(temporaryFolder, extensions, false);
@@ -213,7 +213,12 @@ public class FileUtilsListFilesTest {
     }
 
     @Test
-    public void testListFilesWithDeletion() throws IOException {
+    void testListFilesMissing() {
+        assertTrue(FileUtils.listFiles(new File(temporaryFolder, "dir/does/not/exist/at/all"), null, false).isEmpty());
+    }
+
+    @Test
+    void testListFilesWithDeletion() throws IOException {
         final String[] extensions = {"xml", "txt"};
         final List<File> list;
         final File xFile = new File(temporaryFolder, "x.xml");
@@ -234,7 +239,7 @@ public class FileUtilsListFilesTest {
      * Tests <a href="https://issues.apache.org/jira/browse/IO-856">IO-856</a> ListFiles should not fail on vanishing files.
      */
     @Test
-    public void testListFilesWithDeletionThreaded() throws ExecutionException, InterruptedException {
+    void testListFilesWithDeletionThreaded() throws ExecutionException, InterruptedException {
         // test for IO-856
         // create random directory in tmp, create the directory if it does not exist
         final Path tempPath = PathUtils.getTempDirectory().resolve("IO-856");

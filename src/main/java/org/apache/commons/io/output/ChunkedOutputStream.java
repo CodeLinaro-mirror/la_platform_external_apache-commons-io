@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -43,7 +43,8 @@ public class ChunkedOutputStream extends FilterOutputStream {
      * Using File IO:
      * </p>
      * <pre>{@code
-     * UnsynchronizedByteArrayOutputStream s = UnsynchronizedByteArrayOutputStream.builder()
+     * ChunkedOutputStream s = ChunkedOutputStream.builder()
+     *   .setPath("over/there.out")
      *   .setBufferSize(8192)
      *   .get();
      * }
@@ -52,7 +53,8 @@ public class ChunkedOutputStream extends FilterOutputStream {
      * Using NIO Path:
      * </p>
      * <pre>{@code
-     * UnsynchronizedByteArrayOutputStream s = UnsynchronizedByteArrayOutputStream.builder()
+     * ChunkedOutputStream s = ChunkedOutputStream.builder()
+     *   .setPath("over/there.out")
      *   .setBufferSize(8192)
      *   .get();
      * }
@@ -65,25 +67,33 @@ public class ChunkedOutputStream extends FilterOutputStream {
     public static class Builder extends AbstractStreamBuilder<ChunkedOutputStream, Builder> {
 
         /**
-         * Builds a new {@link UnsynchronizedByteArrayOutputStream}.
+         * Constructs a new builder of {@link ChunkedOutputStream}.
+         */
+        public Builder() {
+            // empty
+        }
+
+        /**
+         * Builds a new {@link ChunkedOutputStream}.
          * <p>
-         * This builder use the following aspects:
+         * This builder uses the following aspects:
          * </p>
          * <ul>
-         * <li>{@link #getInputStream()}</li>
-         * <li>{@link #getBufferSize()} (chunk size)</li>
+         * <li>{@link #getOutputStream()} is the target aspect.</li>
+         * <li>{@link #getBufferSize()} is used for the chunk size.</li>
          * </ul>
          *
          * @return a new instance.
          * @throws IllegalStateException         if the {@code origin} is {@code null}.
          * @throws UnsupportedOperationException if the origin cannot be converted to an {@link OutputStream}.
-         * @throws IOException                   if an I/O error occurs.
+         * @throws IOException                   if an I/O error occurs converting to an {@link OutputStream} using {@link #getOutputStream()}.
          * @see #getOutputStream()
          * @see #getBufferSize()
+         * @see #getUnchecked()
          */
         @Override
         public ChunkedOutputStream get() throws IOException {
-            return new ChunkedOutputStream(getOutputStream(), getBufferSize());
+            return new ChunkedOutputStream(this);
         }
 
     }
@@ -102,6 +112,22 @@ public class ChunkedOutputStream extends FilterOutputStream {
      * The maximum chunk size to us when writing data arrays
      */
     private final int chunkSize;
+
+    /**
+     * Constructs a new stream that uses the specified chunk size.
+     *
+     * @param builder holds contruction data.
+     * @throws IOException if an I/O error occurs.
+     */
+    @SuppressWarnings("resource") // caller closes.
+    private ChunkedOutputStream(final Builder builder) throws IOException {
+        super(builder.getOutputStream());
+        final int bufferSize = builder.getBufferSize();
+        if (bufferSize <= 0) {
+            throw new IllegalArgumentException("chunkSize <= 0");
+        }
+        this.chunkSize = bufferSize;
+    }
 
     /**
      * Constructs a new stream that uses a chunk size of {@link IOUtils#DEFAULT_BUFFER_SIZE}.
@@ -131,6 +157,7 @@ public class ChunkedOutputStream extends FilterOutputStream {
         this.chunkSize = chunkSize;
     }
 
+    /* Package-private for testing. */
     int getChunkSize() {
         return chunkSize;
     }
@@ -141,7 +168,6 @@ public class ChunkedOutputStream extends FilterOutputStream {
      * @param data      the data to write
      * @param srcOffset the offset
      * @param length    the length of data to write
-     *
      * @throws IOException if an I/O error occurs.
      */
     @Override

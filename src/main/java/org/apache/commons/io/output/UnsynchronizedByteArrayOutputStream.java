@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -36,7 +36,7 @@ import org.apache.commons.io.input.UnsynchronizedByteArrayInputStream;
  * @since 2.7
  */
 //@NotThreadSafe
-public final class UnsynchronizedByteArrayOutputStream extends AbstractByteArrayOutputStream {
+public final class UnsynchronizedByteArrayOutputStream extends AbstractByteArrayOutputStream<UnsynchronizedByteArrayOutputStream> {
 
     // @formatter:off
     /**
@@ -65,10 +65,17 @@ public final class UnsynchronizedByteArrayOutputStream extends AbstractByteArray
     public static class Builder extends AbstractStreamBuilder<UnsynchronizedByteArrayOutputStream, Builder> {
 
         /**
+         * Constructs a new builder of {@link UnsynchronizedByteArrayOutputStream}.
+         */
+        public Builder() {
+            // empty
+        }
+
+        /**
          * Builds a new {@link UnsynchronizedByteArrayOutputStream}.
          *
          * <p>
-         * This builder use the following aspects:
+         * This builder uses the following aspects:
          * </p>
          * <ul>
          * <li>{@link #getBufferSize()}</li>
@@ -76,10 +83,11 @@ public final class UnsynchronizedByteArrayOutputStream extends AbstractByteArray
          *
          * @return a new instance.
          * @see AbstractOrigin#getByteArray()
+         * @see #getUnchecked()
          */
         @Override
         public UnsynchronizedByteArrayOutputStream get() {
-            return new UnsynchronizedByteArrayOutputStream(getBufferSize());
+            return new UnsynchronizedByteArrayOutputStream(this);
         }
 
     }
@@ -149,6 +157,10 @@ public final class UnsynchronizedByteArrayOutputStream extends AbstractByteArray
     @Deprecated
     public UnsynchronizedByteArrayOutputStream() {
         this(DEFAULT_SIZE);
+    }
+
+    private UnsynchronizedByteArrayOutputStream(final Builder builder) {
+        this(builder.getBufferSize());
     }
 
     /**

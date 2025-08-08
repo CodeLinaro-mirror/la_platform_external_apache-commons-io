@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -61,6 +61,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.zip.InflaterInputStream;
 
+import org.apache.commons.io.channels.FileChannels;
 import org.apache.commons.io.function.IOConsumer;
 import org.apache.commons.io.function.IOSupplier;
 import org.apache.commons.io.function.IOTriFunction;
@@ -149,7 +150,7 @@ public class IOUtils {
     public static final char DIR_SEPARATOR = File.separatorChar;
 
     /**
-     * The UNIX directory separator character '{@value}'.
+     * The Unix directory separator character '{@value}'.
      */
     public static final char DIR_SEPARATOR_UNIX = '/';
 
@@ -187,7 +188,7 @@ public class IOUtils {
     public static final String LINE_SEPARATOR = System.lineSeparator();
 
     /**
-     * The UNIX line separator string.
+     * The Unix line separator string.
      *
      * @see StandardLineSeparator#LF
      */
@@ -450,6 +451,10 @@ public class IOUtils {
                 if (consumer != null) {
                     consumer.accept(e);
                 }
+            } catch (final Exception e) {
+                if (consumer != null) {
+                    consumer.accept(new IOException(e));
+                }
             }
         }
     }
@@ -513,7 +518,6 @@ public class IOUtils {
      *
      * @param closeable the objects to close, may be null or already closed
      * @since 2.0
-     *
      * @see Throwable#addSuppressed(Throwable)
      */
     public static void closeQuietly(final Closeable closeable) {
@@ -576,14 +580,14 @@ public class IOUtils {
      * Closes the given {@link Closeable} as a null-safe operation while consuming IOException by the given {@code consumer}.
      *
      * @param closeable The resource to close, may be null.
-     * @param consumer Consumes the IOException thrown by {@link Closeable#close()}.
+     * @param consumer Consumes the Exception thrown by {@link Closeable#close()}.
      * @since 2.7
      */
-    public static void closeQuietly(final Closeable closeable, final Consumer<IOException> consumer) {
+    public static void closeQuietly(final Closeable closeable, final Consumer<Exception> consumer) {
         if (closeable != null) {
             try {
                 closeable.close();
-            } catch (final IOException e) {
+            } catch (final Exception e) {
                 if (consumer != null) {
                     consumer.accept(e);
                 }
@@ -900,51 +904,17 @@ public class IOUtils {
      * exist, false otherwise
      * @throws IOException          if an I/O error occurs
      */
+    @SuppressWarnings("resource") // Caller closes input streams
     public static boolean contentEquals(final InputStream input1, final InputStream input2) throws IOException {
-        // Before making any changes, please test with
-        // org.apache.commons.io.jmh.IOUtilsContentEqualsInputStreamsBenchmark
+        // Before making any changes, please test with org.apache.commons.io.jmh.IOUtilsContentEqualsInputStreamsBenchmark
         if (input1 == input2) {
             return true;
         }
         if (input1 == null || input2 == null) {
             return false;
         }
-
-        // reuse one
-        final byte[] array1 = getScratchByteArray();
-        // allocate another
-        final byte[] array2 = byteArray();
-        int pos1;
-        int pos2;
-        int count1;
-        int count2;
-        while (true) {
-            pos1 = 0;
-            pos2 = 0;
-            for (int index = 0; index < DEFAULT_BUFFER_SIZE; index++) {
-                if (pos1 == index) {
-                    do {
-                        count1 = input1.read(array1, pos1, DEFAULT_BUFFER_SIZE - pos1);
-                    } while (count1 == 0);
-                    if (count1 == EOF) {
-                        return pos2 == index && input2.read() == EOF;
-                    }
-                    pos1 += count1;
-                }
-                if (pos2 == index) {
-                    do {
-                        count2 = input2.read(array2, pos2, DEFAULT_BUFFER_SIZE - pos2);
-                    } while (count2 == 0);
-                    if (count2 == EOF) {
-                        return pos1 == index && input1.read() == EOF;
-                    }
-                    pos2 += count2;
-                }
-                if (array1[index] != array2[index]) {
-                    return false;
-                }
-            }
-        }
+        // We do not close FileChannels because that closes the owning InputStream.
+        return FileChannels.contentEquals(Channels.newChannel(input1), Channels.newChannel(input2), DEFAULT_BUFFER_SIZE);
     }
 
     // TODO Consider making public
@@ -1113,7 +1083,7 @@ public class IOUtils {
 
     /**
      * Copies bytes from an {@link InputStream} to chars on a
-     * {@link Writer} using the default character encoding of the platform.
+     * {@link Writer} using the virtual machine's {@link Charset#defaultCharset() default charset}.
      * <p>
      * This method buffers the input internally, so there is no need to use a
      * {@link BufferedInputStream}.
@@ -1269,8 +1239,8 @@ public class IOUtils {
 
     /**
      * Copies chars from a {@link Reader} to bytes on an
-     * {@link OutputStream} using the default character encoding of the
-     * platform, and calling flush.
+     * {@link OutputStream} using the the virtual machine's {@link Charset#defaultCharset() default charset},
+     * and calling flush.
      * <p>
      * This method buffers the input internally, so there is no need to use a
      * {@link BufferedReader}.
@@ -1504,14 +1474,13 @@ public class IOUtils {
      * </p>
      * The buffer size is given by {@link #DEFAULT_BUFFER_SIZE}.
      *
-     * @param input the {@link InputStream} to read
-     * @param output the {@link OutputStream} to write to
-     * @param inputOffset : number of bytes to skip from input before copying
-     * -ve values are ignored
-     * @param length number of bytes to copy. -ve means all
-     * @return the number of bytes copied
-     * @throws NullPointerException if the input or output is null
-     * @throws IOException          if an I/O error occurs
+     * @param input the {@link InputStream} to read.
+     * @param output the {@link OutputStream} to write.
+     * @param inputOffset number of bytes to skip from input before copying, these bytes are ignored.
+     * @param length number of bytes to copy.
+     * @return the number of bytes copied.
+     * @throws NullPointerException if the input or output is null.
+     * @throws IOException          if an I/O error occurs.
      * @since 2.2
      */
     public static long copyLarge(final InputStream input, final OutputStream output, final long inputOffset,
@@ -1532,15 +1501,14 @@ public class IOUtils {
      * this is done to guarantee that the correct number of characters are skipped.
      * </p>
      *
-     * @param input the {@link InputStream} to read
-     * @param output the {@link OutputStream} to write to
-     * @param inputOffset number of bytes to skip from input before copying
-     * -ve values are ignored
-     * @param length number of bytes to copy. -ve means all
-     * @param buffer the buffer to use for the copy
-     * @return the number of bytes copied
-     * @throws NullPointerException if the input or output is null
-     * @throws IOException          if an I/O error occurs
+     * @param input the {@link InputStream} to read.
+     * @param output the {@link OutputStream} to write.
+     * @param inputOffset number of bytes to skip from input before copying, these bytes are ignored.
+     * @param length number of bytes to copy.
+     * @param buffer the buffer to use for the copy.
+     * @return the number of bytes copied.
+     * @throws NullPointerException if the input or output is null.
+     * @throws IOException          if an I/O error occurs.
      * @since 2.2
      */
     public static long copyLarge(final InputStream input, final OutputStream output,
@@ -2043,7 +2011,6 @@ public class IOUtils {
      *
      * @param input where to read input from
      * @param buffer destination
-     *
      * @throws IOException              if there is a problem reading the file
      * @throws IllegalArgumentException if length is negative
      * @throws EOFException             if the number of bytes read was incorrect
@@ -2064,7 +2031,6 @@ public class IOUtils {
      * @param buffer destination
      * @param offset initial offset into buffer
      * @param length length to read, must be &gt;= 0
-     *
      * @throws IOException              if there is a problem reading the file
      * @throws IllegalArgumentException if length is negative
      * @throws EOFException             if the number of bytes read was incorrect
@@ -2178,7 +2144,7 @@ public class IOUtils {
 
     /**
      * Gets the contents of an {@link InputStream} as a list of Strings,
-     * one entry per line, using the default character encoding of the platform.
+     * one entry per line, using the virtual machine's {@link Charset#defaultCharset() default charset}.
      * <p>
      * This method buffers the input internally, so there is no need to use a
      * {@link BufferedInputStream}.
@@ -2798,7 +2764,7 @@ public class IOUtils {
 
     /**
      * Gets the contents of a {@link Reader} as a {@code byte[]}
-     * using the default character encoding of the platform.
+     * using the virtual machine's {@link Charset#defaultCharset() default charset}.
      * <p>
      * This method buffers the input internally, so there is no need to use a
      * {@link BufferedReader}.
@@ -2863,7 +2829,7 @@ public class IOUtils {
 
     /**
      * Gets the contents of a {@link String} as a {@code byte[]}
-     * using the default character encoding of the platform.
+     * using the virtual machine's {@link Charset#defaultCharset() default charset}.
      * <p>
      * This is the same as {@link String#getBytes()}.
      * </p>
@@ -2924,7 +2890,7 @@ public class IOUtils {
 
     /**
      * Gets the contents of an {@link InputStream} as a character array
-     * using the default character encoding of the platform.
+     * using the virtual machine's {@link Charset#defaultCharset() default charset}.
      * <p>
      * This method buffers the input internally, so there is no need to use a
      * {@link BufferedInputStream}.
@@ -3009,7 +2975,7 @@ public class IOUtils {
 
     /**
      * Converts the specified CharSequence to an input stream, encoded as bytes
-     * using the default character encoding of the platform.
+     * using the virtual machine's {@link Charset#defaultCharset() default charset}.
      *
      * @param input the CharSequence to convert
      * @return an input stream
@@ -3054,7 +3020,7 @@ public class IOUtils {
 
     /**
      * Converts the specified string to an input stream, encoded as bytes
-     * using the default character encoding of the platform.
+     * using the virtual machine's {@link Charset#defaultCharset() default charset}.
      *
      * @param input the string to convert
      * @return an input stream
@@ -3099,7 +3065,7 @@ public class IOUtils {
 
     /**
      * Gets the contents of a {@code byte[]} as a String
-     * using the default character encoding of the platform.
+     * using the virtual machine's {@link Charset#defaultCharset() default charset}.
      *
      * @param input the byte array to read
      * @return the requested String
@@ -3131,7 +3097,7 @@ public class IOUtils {
 
     /**
      * Gets the contents of an {@link InputStream} as a String
-     * using the default character encoding of the platform.
+     * using the virtual machine's {@link Charset#defaultCharset() default charset}.
      * <p>
      * This method buffers the input internally, so there is no need to use a
      * {@link BufferedInputStream}.
@@ -3260,7 +3226,7 @@ public class IOUtils {
     }
 
     /**
-     * Gets the contents at the given URI.
+     * Gets the contents at the given URI using the virtual machine's {@link Charset#defaultCharset() default charset}.
      *
      * @param uri The URI source.
      * @return The contents of the URL as a String.
@@ -3301,7 +3267,7 @@ public class IOUtils {
     }
 
     /**
-     * Gets the contents at the given URL.
+     * Gets the contents at the given URL using the virtual machine's {@link Charset#defaultCharset() default charset}.
      *
      * @param url The URL source.
      * @return The contents of the URL as a String.
@@ -3360,7 +3326,7 @@ public class IOUtils {
 
     /**
      * Writes bytes from a {@code byte[]} to chars on a {@link Writer}
-     * using the default character encoding of the platform.
+     * using the virtual machine's {@link Charset#defaultCharset() default charset}.
      * <p>
      * This method uses {@link String#String(byte[])}.
      * </p>
@@ -3427,8 +3393,7 @@ public class IOUtils {
      * Writes chars from a {@code char[]} to bytes on an
      * {@link OutputStream}.
      * <p>
-     * This method uses {@link String#String(char[])} and
-     * {@link String#getBytes()}.
+     * This method uses the virtual machine's {@link Charset#defaultCharset() default charset}.
      * </p>
      *
      * @param data the char array to write, do not modify during output,
@@ -3511,8 +3476,7 @@ public class IOUtils {
 
     /**
      * Writes chars from a {@link CharSequence} to bytes on an
-     * {@link OutputStream} using the default character encoding of the
-     * platform.
+     * {@link OutputStream} using the virtual machine's {@link Charset#defaultCharset() default charset}.
      * <p>
      * This method uses {@link String#getBytes()}.
      * </p>
@@ -3592,8 +3556,7 @@ public class IOUtils {
 
     /**
      * Writes chars from a {@link String} to bytes on an
-     * {@link OutputStream} using the default character encoding of the
-     * platform.
+     * {@link OutputStream} using the virtual machine's {@link Charset#defaultCharset() default charset}.
      * <p>
      * This method uses {@link String#getBytes()}.
      * </p>
@@ -3794,8 +3757,8 @@ public class IOUtils {
 
     /**
      * Writes the {@link #toString()} value of each item in a collection to
-     * an {@link OutputStream} line by line, using the default character
-     * encoding of the platform and the specified line ending.
+     * an {@link OutputStream} line by line, using the virtual machine's {@link Charset#defaultCharset() default charset}
+     * and the specified line ending.
      *
      * @param lines the lines to write, null entries produce blank lines
      * @param lineEnding the line separator to use, null is system default
