@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -39,6 +39,7 @@ import java.nio.file.spi.FileSystemProvider;
 import java.util.Arrays;
 import java.util.Objects;
 
+import org.apache.commons.io.Charsets;
 import org.apache.commons.io.IORandomAccessFile;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.RandomAccessFileMode;
@@ -75,7 +76,7 @@ public abstract class AbstractOrigin<T, B extends AbstractOrigin<T, B>> extends 
      * @param <T> the type of instances to build.
      * @param <B> the type of builder subclass.
      */
-    public static abstract class AbstractRandomAccessFileOrigin<T extends RandomAccessFile, B extends AbstractRandomAccessFileOrigin<T, B>>
+    public abstract static class AbstractRandomAccessFileOrigin<T extends RandomAccessFile, B extends AbstractRandomAccessFileOrigin<T, B>>
             extends AbstractOrigin<T, B> {
 
         /**
@@ -84,7 +85,7 @@ public abstract class AbstractOrigin<T, B extends AbstractOrigin<T, B>> extends 
          * Starting from this origin, you can everything except a Path and a File.
          * </p>
          *
-         * @param origin The origin.
+         * @param origin The origin, not null.
          */
         public AbstractRandomAccessFileOrigin(final T origin) {
             super(origin);
@@ -128,12 +129,12 @@ public abstract class AbstractOrigin<T, B extends AbstractOrigin<T, B>> extends 
 
         @Override
         public Reader getReader(final Charset charset) throws IOException {
-            return new InputStreamReader(getInputStream(), charset);
+            return new InputStreamReader(getInputStream(), Charsets.toCharset(charset));
         }
 
         @Override
         public Writer getWriter(final Charset charset, final OpenOption... options) throws IOException {
-            return new OutputStreamWriter(getOutputStream(options), charset);
+            return new OutputStreamWriter(getOutputStream(options), Charsets.toCharset(charset));
         }
 
         @Override
@@ -150,7 +151,7 @@ public abstract class AbstractOrigin<T, B extends AbstractOrigin<T, B>> extends 
         /**
          * Constructs a new instance for the given origin.
          *
-         * @param origin The origin.
+         * @param origin The origin, not null.
          */
         public ByteArrayOrigin(final byte[] origin) {
             super(origin);
@@ -175,7 +176,7 @@ public abstract class AbstractOrigin<T, B extends AbstractOrigin<T, B>> extends 
 
         @Override
         public Reader getReader(final Charset charset) throws IOException {
-            return new InputStreamReader(getInputStream(), charset);
+            return new InputStreamReader(getInputStream(), Charsets.toCharset(charset));
         }
 
         @Override
@@ -193,7 +194,7 @@ public abstract class AbstractOrigin<T, B extends AbstractOrigin<T, B>> extends 
         /**
          * Constructs a new instance for the given origin.
          *
-         * @param origin The origin.
+         * @param origin The origin, not null.
          */
         public CharSequenceOrigin(final CharSequence origin) {
             super(origin);
@@ -258,7 +259,7 @@ public abstract class AbstractOrigin<T, B extends AbstractOrigin<T, B>> extends 
         /**
          * Constructs a new instance for the given origin.
          *
-         * @param origin The origin.
+         * @param origin The origin, not null.
          */
         public FileOrigin(final File origin) {
             super(origin);
@@ -295,7 +296,7 @@ public abstract class AbstractOrigin<T, B extends AbstractOrigin<T, B>> extends 
         /**
          * Constructs a new instance for the given origin.
          *
-         * @param origin The origin.
+         * @param origin The origin, not null.
          */
         public InputStreamOrigin(final InputStream origin) {
             super(origin);
@@ -320,7 +321,7 @@ public abstract class AbstractOrigin<T, B extends AbstractOrigin<T, B>> extends 
 
         @Override
         public Reader getReader(final Charset charset) throws IOException {
-            return new InputStreamReader(getInputStream(), charset);
+            return new InputStreamReader(getInputStream(), Charsets.toCharset(charset));
         }
 
     }
@@ -335,7 +336,7 @@ public abstract class AbstractOrigin<T, B extends AbstractOrigin<T, B>> extends 
         /**
          * A {@link RandomAccessFile} origin.
          *
-         * @param origin The origin.
+         * @param origin The origin, not null.
          */
         public IORandomAccessFileOrigin(final IORandomAccessFile origin) {
             super(origin);
@@ -365,7 +366,7 @@ public abstract class AbstractOrigin<T, B extends AbstractOrigin<T, B>> extends 
         /**
          * Constructs a new instance for the given origin.
          *
-         * @param origin The origin.
+         * @param origin The origin, not null.
          */
         public OutputStreamOrigin(final OutputStream origin) {
             super(origin);
@@ -391,7 +392,7 @@ public abstract class AbstractOrigin<T, B extends AbstractOrigin<T, B>> extends 
          */
         @Override
         public Writer getWriter(final Charset charset, final OpenOption... options) throws IOException {
-            return new OutputStreamWriter(origin, charset);
+            return new OutputStreamWriter(origin, Charsets.toCharset(charset));
         }
     }
 
@@ -406,7 +407,7 @@ public abstract class AbstractOrigin<T, B extends AbstractOrigin<T, B>> extends 
         /**
          * Constructs a new instance for the given origin.
          *
-         * @param origin The origin.
+         * @param origin The origin, not null.
          */
         public PathOrigin(final Path origin) {
             super(origin);
@@ -445,7 +446,7 @@ public abstract class AbstractOrigin<T, B extends AbstractOrigin<T, B>> extends 
          * Starting from this origin, you can everything except a Path and a File.
          * </p>
          *
-         * @param origin The origin.
+         * @param origin The origin, not null.
          */
         public RandomAccessFileOrigin(final RandomAccessFile origin) {
             super(origin);
@@ -464,7 +465,7 @@ public abstract class AbstractOrigin<T, B extends AbstractOrigin<T, B>> extends 
         /**
          * Constructs a new instance for the given origin.
          *
-         * @param origin The origin.
+         * @param origin The origin, not null.
          */
         public ReaderOrigin(final Reader origin) {
             super(origin);
@@ -523,7 +524,7 @@ public abstract class AbstractOrigin<T, B extends AbstractOrigin<T, B>> extends 
         /**
          * Constructs a new instance for the given origin.
          *
-         * @param origin The origin.
+         * @param origin The origin, not null.
          */
         public URIOrigin(final URI origin) {
             super(origin);
@@ -565,7 +566,7 @@ public abstract class AbstractOrigin<T, B extends AbstractOrigin<T, B>> extends 
         /**
          * Constructs a new instance for the given origin.
          *
-         * @param origin The origin.
+         * @param origin The origin, not null.
          */
         public WriterOrigin(final Writer origin) {
             super(origin);
@@ -605,9 +606,9 @@ public abstract class AbstractOrigin<T, B extends AbstractOrigin<T, B>> extends 
     final T origin;
 
     /**
-     * Constructs a new instance for a subclass.
+     * Constructs a new instance for subclasses.
      *
-     * @param origin The origin.
+     * @param origin The origin, not null.
      */
     protected AbstractOrigin(final T origin) {
         this.origin = Objects.requireNonNull(origin, "origin");
@@ -729,12 +730,12 @@ public abstract class AbstractOrigin<T, B extends AbstractOrigin<T, B>> extends 
     /**
      * Gets a new Reader on the origin, buffered by default.
      *
-     * @param charset the charset to use for decoding
+     * @param charset the charset to use for decoding, null maps to the default Charset.
      * @return a new Reader on the origin.
      * @throws IOException if an I/O error occurs opening the file.
      */
     public Reader getReader(final Charset charset) throws IOException {
-        return Files.newBufferedReader(getPath(), charset);
+        return Files.newBufferedReader(getPath(), Charsets.toCharset(charset));
     }
 
     private String getSimpleClassName() {
@@ -751,7 +752,7 @@ public abstract class AbstractOrigin<T, B extends AbstractOrigin<T, B>> extends 
      * @throws UnsupportedOperationException if the origin cannot be converted to a Path.
      */
     public Writer getWriter(final Charset charset, final OpenOption... options) throws IOException {
-        return Files.newBufferedWriter(getPath(), charset, options);
+        return Files.newBufferedWriter(getPath(), Charsets.toCharset(charset), options);
     }
 
     /**

@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -68,7 +68,7 @@ public class XmlStreamWriter extends Writer {
     public static class Builder extends AbstractStreamBuilder<XmlStreamWriter, Builder> {
 
         /**
-         * Constructs a new {@link Builder}.
+         * Constructs a new builder of {@link XmlStreamWriter}.
          */
         public Builder() {
             setCharsetDefault(StandardCharsets.UTF_8);
@@ -78,10 +78,10 @@ public class XmlStreamWriter extends Writer {
         /**
          * Builds a new {@link XmlStreamWriter}.
          * <p>
-         * You must set input that supports {@link #getOutputStream()} on this builder, otherwise, this method throws an exception.
+         * You must set an aspect that supports {@link #getOutputStream()} on this builder, otherwise, this method throws an exception.
          * </p>
          * <p>
-         * This builder use the following aspects:
+         * This builder uses the following aspects:
          * </p>
          * <ul>
          * <li>{@link #getOutputStream()}</li>
@@ -91,13 +91,13 @@ public class XmlStreamWriter extends Writer {
          * @return a new instance.
          * @throws IllegalStateException         if the {@code origin} is {@code null}.
          * @throws UnsupportedOperationException if the origin cannot be converted to an {@link OutputStream}.
-         * @throws IOException                   if an I/O error occurs.
+         * @throws IOException                   if an I/O error occurs converting to an {@link OutputStream} using {@link #getOutputStream()}.
          * @see #getOutputStream()
+         * @see #getUnchecked()
          */
-        @SuppressWarnings("resource")
         @Override
         public XmlStreamWriter get() throws IOException {
-            return new XmlStreamWriter(getOutputStream(), getCharset());
+            return new XmlStreamWriter(this);
         }
 
     }
@@ -123,6 +123,11 @@ public class XmlStreamWriter extends Writer {
     private Writer writer;
 
     private Charset charset;
+
+    @SuppressWarnings("resource") // caller closes.
+    private XmlStreamWriter(final Builder builder) throws IOException {
+        this(builder.getOutputStream(), builder.getCharset());
+    }
 
     /**
      * Constructs a new XML stream writer for the specified file

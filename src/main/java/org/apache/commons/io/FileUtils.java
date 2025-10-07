@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -294,7 +294,7 @@ public class FileUtils {
      */
     private static void checkExists(final File file, final boolean strict) throws FileNotFoundException {
         Objects.requireNonNull(file, PROTOCOL_FILE);
-        if (strict && !file.exists()) {
+        if (strict && !file.exists() && !isSymlink(file)) {
             throw new FileNotFoundException(file.toString());
         }
     }
@@ -419,25 +419,20 @@ public class FileUtils {
         if (file1Exists != file2.exists()) {
             return false;
         }
-
         if (!file1Exists) {
             // two not existing files are equal
             return true;
         }
-
         checkIsFile(file1, "file1");
         checkIsFile(file2, "file2");
-
         if (file1.length() != file2.length()) {
             // lengths differ, cannot be equal
             return false;
         }
-
         if (file1.getCanonicalFile().equals(file2.getCanonicalFile())) {
             // same file
             return true;
         }
-
         return PathUtils.fileContentEquals(file1.toPath(), file2.toPath());
     }
 
@@ -460,8 +455,7 @@ public class FileUtils {
      * @see IOUtils#contentEqualsIgnoreEOL(Reader, Reader)
      * @since 2.2
      */
-    public static boolean contentEqualsIgnoreEOL(final File file1, final File file2, final String charsetName)
-            throws IOException {
+    public static boolean contentEqualsIgnoreEOL(final File file1, final File file2, final String charsetName) throws IOException {
         if (file1 == null && file2 == null) {
             return true;
         }
@@ -472,23 +466,19 @@ public class FileUtils {
         if (file1Exists != file2.exists()) {
             return false;
         }
-
         if (!file1Exists) {
             // two not existing files are equal
             return true;
         }
-
         checkFileExists(file1, "file1");
         checkFileExists(file2, "file2");
-
         if (file1.getCanonicalFile().equals(file2.getCanonicalFile())) {
             // same file
             return true;
         }
-
         final Charset charset = Charsets.toCharset(charsetName);
         try (Reader input1 = new InputStreamReader(Files.newInputStream(file1.toPath()), charset);
-             Reader input2 = new InputStreamReader(Files.newInputStream(file2.toPath()), charset)) {
+                Reader input2 = new InputStreamReader(Files.newInputStream(file2.toPath()), charset)) {
             return IOUtils.contentEqualsIgnoreEOL(input1, input2);
         }
     }
@@ -722,11 +712,10 @@ public class FileUtils {
      * @since 2.8.0
      */
     public static void copyDirectory(final File srcDir, final File destDir, final FileFilter fileFilter, final boolean preserveFileDate,
-        final CopyOption... copyOptions) throws IOException {
+            final CopyOption... copyOptions) throws IOException {
         Objects.requireNonNull(destDir, "destination");
         requireDirectoryExists(srcDir, "srcDir");
         requireCanonicalPathsNotEquals(srcDir, destDir);
-
         // Cater for destination being directory within the source directory (see IO-141)
         List<String> exclusionList = null;
         final String srcDirCanonicalPath = srcDir.getCanonicalPath();
@@ -869,11 +858,8 @@ public class FileUtils {
         if (destFile.exists()) {
             checkFileExists(destFile, "destFile");
         }
-
         final Path srcPath = srcFile.toPath();
-
         Files.copy(srcPath, destFile.toPath(), copyOptions);
-
         // On Windows, the last modified time is copied by default.
         if (preserveFileDate && !Files.isSymbolicLink(srcPath) && !setTimes(srcFile, destFile)) {
             throw new IOException("Cannot set the file time.");
@@ -1259,7 +1245,7 @@ public class FileUtils {
     }
 
     /**
-     * Schedules a directory recursively for deletion on JVM exit.
+     * Requests a directory for deletion recursively when the virtual machine terminates.
      *
      * @param directory directory to delete, must not be {@code null}
      * @throws NullPointerException if the directory is {@code null}
@@ -1301,7 +1287,6 @@ public class FileUtils {
         } catch (final Exception ignored) {
             // ignore
         }
-
         try {
             return file.delete();
         } catch (final Exception ignored) {
@@ -1310,7 +1295,7 @@ public class FileUtils {
     }
 
     /**
-     * Determines whether the {@code parent} directory contains the {@code child} element (a file or directory).
+     * Tests whether the {@code parent} directory contains the {@code child} element (a file or directory).
      * <p>
      * Files are normalized before comparison.
      * </p>
@@ -1434,7 +1419,7 @@ public class FileUtils {
     }
 
     /**
-     * Schedules a file to be deleted when JVM exits.
+     * Requests a file to be deleted when the virtual machine terminates.
      * If file is directory delete it and all subdirectories.
      *
      * @param file file or directory to delete, must not be {@code null}.
@@ -1534,7 +1519,7 @@ public class FileUtils {
     }
 
     /**
-     * Returns a {@link File} representing the system temporary directory.
+     * Gets a {@link File} representing the system temporary directory.
      *
      * @return the system temporary directory as a File
      * @since 2.0
@@ -1544,7 +1529,7 @@ public class FileUtils {
     }
 
     /**
-     * Returns the path to the system temporary directory.
+     * Getsv the path to the system temporary directory.
      *
      * WARNING: this method relies on the Java system property 'java.io.tmpdir'
      * which may or may not have a trailing file separator.
@@ -1559,7 +1544,7 @@ public class FileUtils {
     }
 
     /**
-     * Returns a {@link File} representing the user's home directory.
+     * Gets a {@link File} representing the user's home directory.
      *
      * @return the user's home directory.
      * @since 2.0
@@ -1569,7 +1554,7 @@ public class FileUtils {
     }
 
     /**
-     * Returns the path to the user's home directory.
+     * Gets the path to the user's home directory.
      *
      * @return the path to the user's home directory.
      * @since 2.0
@@ -1614,11 +1599,13 @@ public class FileUtils {
      * Tests if the specified {@link File} is newer than the specified {@link ChronoLocalDate}
      * at the end of day.
      *
-     * <p>Note: The input date is assumed to be in the system default time-zone with the time
+     * <p>
+     * Note: The input date is assumed to be in the system default time-zone with the time
      * part set to the current time. To use a non-default time-zone use the method
      * {@link #isFileNewer(File, ChronoLocalDateTime, ZoneId)
      * isFileNewer(file, chronoLocalDate.atTime(LocalTime.now(zoneId)), zoneId)} where
      * {@code zoneId} is a valid {@link ZoneId}.
+     * </p>
      *
      * @param file            the {@link File} of which the modification date must be compared.
      * @param chronoLocalDate the date reference.
@@ -1636,10 +1623,12 @@ public class FileUtils {
      * Tests if the specified {@link File} is newer than the specified {@link ChronoLocalDate}
      * at the specified time.
      *
-     * <p>Note: The input date and time are assumed to be in the system default time-zone. To use a
+     * <p>
+     * Note: The input date and time are assumed to be in the system default time-zone. To use a
      * non-default time-zone use the method {@link #isFileNewer(File, ChronoLocalDateTime, ZoneId)
      * isFileNewer(file, chronoLocalDate.atTime(localTime), zoneId)} where {@code zoneId} is a valid
      * {@link ZoneId}.
+     * </p>
      *
      * @param file            the {@link File} of which the modification date must be compared.
      * @param chronoLocalDate the date reference.
@@ -1679,10 +1668,12 @@ public class FileUtils {
      * Tests if the specified {@link File} is newer than the specified {@link ChronoLocalDateTime}
      * at the system-default time zone.
      *
-     * <p>Note: The input date and time is assumed to be in the system default time-zone. To use a
+     * <p>
+     * Note: The input date and time is assumed to be in the system default time-zone. To use a
      * non-default time-zone use the method {@link #isFileNewer(File, ChronoLocalDateTime, ZoneId)
      * isFileNewer(file, chronoLocalDateTime, zoneId)} where {@code zoneId} is a valid
      * {@link ZoneId}.
+     * </p>
      *
      * @param file                the {@link File} of which the modification date must be compared.
      * @param chronoLocalDateTime the date reference.
@@ -1729,7 +1720,7 @@ public class FileUtils {
     public static boolean isFileNewer(final File file, final ChronoZonedDateTime<?> chronoZonedDateTime) {
         Objects.requireNonNull(file, PROTOCOL_FILE);
         Objects.requireNonNull(chronoZonedDateTime, "chronoZonedDateTime");
-        return Uncheck.get(() -> PathUtils.isNewer(file.toPath(), chronoZonedDateTime));
+        return Uncheck.getAsBoolean(() -> PathUtils.isNewer(file.toPath(), chronoZonedDateTime));
     }
 
     /**
@@ -1758,7 +1749,7 @@ public class FileUtils {
      * @throws UncheckedIOException if the reference file doesn't exist.
      */
     public static boolean isFileNewer(final File file, final File reference) {
-        return Uncheck.get(() -> PathUtils.isNewer(file.toPath(), reference.toPath()));
+        return Uncheck.getAsBoolean(() -> PathUtils.isNewer(file.toPath(), reference.toPath()));
     }
 
     /**
@@ -1788,7 +1779,7 @@ public class FileUtils {
      */
     public static boolean isFileNewer(final File file, final Instant instant) {
         Objects.requireNonNull(instant, "instant");
-        return Uncheck.get(() -> PathUtils.isNewer(file.toPath(), instant));
+        return Uncheck.getAsBoolean(() -> PathUtils.isNewer(file.toPath(), instant));
     }
 
     /**
@@ -1803,7 +1794,7 @@ public class FileUtils {
      */
     public static boolean isFileNewer(final File file, final long timeMillis) {
         Objects.requireNonNull(file, PROTOCOL_FILE);
-        return Uncheck.get(() -> PathUtils.isNewer(file.toPath(), timeMillis));
+        return Uncheck.getAsBoolean(() -> PathUtils.isNewer(file.toPath(), timeMillis));
     }
 
     /**
@@ -1825,11 +1816,13 @@ public class FileUtils {
      * Tests if the specified {@link File} is older than the specified {@link ChronoLocalDate}
      * at the end of day.
      *
-     * <p>Note: The input date is assumed to be in the system default time-zone with the time
+     * <p>
+     * Note: The input date is assumed to be in the system default time-zone with the time
      * part set to the current time. To use a non-default time-zone use the method
      * {@link #isFileOlder(File, ChronoLocalDateTime, ZoneId)
      * isFileOlder(file, chronoLocalDate.atTime(LocalTime.now(zoneId)), zoneId)} where
      * {@code zoneId} is a valid {@link ZoneId}.
+     * </p>
      *
      * @param file            the {@link File} of which the modification date must be compared.
      * @param chronoLocalDate the date reference.
@@ -1849,10 +1842,12 @@ public class FileUtils {
      * Tests if the specified {@link File} is older than the specified {@link ChronoLocalDate}
      * at the specified {@link LocalTime}.
      *
-     * <p>Note: The input date and time are assumed to be in the system default time-zone. To use a
+     * <p>
+     * Note: The input date and time are assumed to be in the system default time-zone. To use a
      * non-default time-zone use the method {@link #isFileOlder(File, ChronoLocalDateTime, ZoneId)
      * isFileOlder(file, chronoLocalDate.atTime(localTime), zoneId)} where {@code zoneId} is a valid
      * {@link ZoneId}.
+     * </p>
      *
      * @param file            the {@link File} of which the modification date must be compared.
      * @param chronoLocalDate the date reference.
@@ -1893,10 +1888,12 @@ public class FileUtils {
      * Tests if the specified {@link File} is older than the specified {@link ChronoLocalDateTime}
      * at the system-default time zone.
      *
-     * <p>Note: The input date and time is assumed to be in the system default time-zone. To use a
+     * <p>
+     * Note: The input date and time is assumed to be in the system default time-zone. To use a
      * non-default time-zone use the method {@link #isFileOlder(File, ChronoLocalDateTime, ZoneId)
      * isFileOlder(file, chronoLocalDateTime, zoneId)} where {@code zoneId} is a valid
      * {@link ZoneId}.
+     * </p>
      *
      * @param file                the {@link File} of which the modification date must be compared.
      * @param chronoLocalDateTime the date reference.
@@ -1971,7 +1968,7 @@ public class FileUtils {
      * @throws UncheckedIOException if an I/O error occurs
      */
     public static boolean isFileOlder(final File file, final File reference) throws FileNotFoundException {
-        return Uncheck.get(() -> PathUtils.isOlder(file.toPath(), reference.toPath()));
+        return Uncheck.getAsBoolean(() -> PathUtils.isOlder(file.toPath(), reference.toPath()));
     }
 
     /**
@@ -2000,7 +1997,7 @@ public class FileUtils {
      */
     public static boolean isFileOlder(final File file, final Instant instant) {
         Objects.requireNonNull(instant, "instant");
-        return Uncheck.get(() -> PathUtils.isOlder(file.toPath(), instant));
+        return Uncheck.getAsBoolean(() -> PathUtils.isOlder(file.toPath(), instant));
     }
 
     /**
@@ -2015,7 +2012,7 @@ public class FileUtils {
      */
     public static boolean isFileOlder(final File file, final long timeMillis) {
         Objects.requireNonNull(file, PROTOCOL_FILE);
-        return Uncheck.get(() -> PathUtils.isOlder(file.toPath(), timeMillis));
+        return Uncheck.getAsBoolean(() -> PathUtils.isOlder(file.toPath(), timeMillis));
     }
 
     /**
@@ -2066,7 +2063,7 @@ public class FileUtils {
      * This method delegates to {@link Files#isSymbolicLink(Path path)}
      * </p>
      *
-     * @param file the file to test.
+     * @param file the file to test, may be null.
      * @return true if the file is a symbolic link, see {@link Files#isSymbolicLink(Path path)}.
      * @since 2.0
      * @see Files#isSymbolicLink(Path)
@@ -2282,8 +2279,14 @@ public class FileUtils {
         final boolean isDirFilterSet = dirFilter != null;
         final FileEqualsFileFilter rootDirFilter = new FileEqualsFileFilter(directory);
         final PathFilter dirPathFilter = isDirFilterSet ? rootDirFilter.or(dirFilter) : rootDirFilter;
-        final AccumulatorPathVisitor visitor = new AccumulatorPathVisitor(Counters.noopPathCounters(), fileFilter, dirPathFilter,
-                (p, e) -> FileVisitResult.CONTINUE);
+        // @formatter:off
+        final AccumulatorPathVisitor visitor = AccumulatorPathVisitor.builder()
+                .setPathCounters(Counters.noopPathCounters())
+                .setFileFilter(fileFilter)
+                .setDirectoryFilter(dirPathFilter)
+                .setVisitFileFailedFunction((p, e) -> FileVisitResult.CONTINUE)
+                .get();
+        // @formatter:on
         final Set<FileVisitOption> optionSet = new HashSet<>();
         if (options != null) {
             Collections.addAll(optionSet, options);
@@ -2349,6 +2352,14 @@ public class FileUtils {
         return toList(visitor.getFileList().stream().map(Path::toFile));
     }
 
+    /**
+     * Lists Files in the given {@code directory}, adding each file to the given list.
+     *
+     * @param directory A File for an assumed directory, not null.
+     * @param files The list to add found Files, not null.
+     * @param recursive Whether or not to recurse into subdirectories.
+     * @param filter How to filter files, not null.
+     */
     @SuppressWarnings("null")
     private static void listFiles(final File directory, final List<File> files, final boolean recursive, final FilenameFilter filter) {
         final File[] listFiles = directory.listFiles();
@@ -2536,7 +2547,7 @@ public class FileUtils {
      * @since 2.9.0
      */
     public static void moveFile(final File srcFile, final File destFile, final CopyOption... copyOptions) throws IOException {
-        Objects.requireNonNull(destFile, "destination");
+        Objects.requireNonNull(destFile, "destFile");
         checkFileExists(srcFile, "srcFile");
         requireAbsent(destFile, "destFile");
         final boolean rename = srcFile.renameTo(destFile);
@@ -2725,14 +2736,14 @@ public class FileUtils {
     }
 
     /**
-     * Reads the contents of a file into a String using the default encoding for the VM.
-     * The file is always closed.
+     * Reads the contents of a file into a String using the virtual machine's {@link Charset#defaultCharset() default charset}. The
+     * file is always closed.
      *
      * @param file the file to read, must not be {@code null}
      * @return the file contents, never {@code null}
      * @throws NullPointerException if file is {@code null}.
-     * @throws IOException if an I/O error occurs, including when the file does not exist, is a directory rather than a
-     *         regular file, or for some other reason why the file cannot be opened for reading.
+     * @throws IOException          if an I/O error occurs, including when the file does not exist, is a directory rather than a regular file, or for some other
+     *                              reason why the file cannot be opened for reading.
      * @since 1.3.1
      * @deprecated Use {@link #readFileToString(File, Charset)} instead (and specify the appropriate encoding)
      */
@@ -2774,14 +2785,14 @@ public class FileUtils {
     }
 
     /**
-     * Reads the contents of a file line by line to a List of Strings using the default encoding for the VM.
+     * Reads the contents of a file line by line to a List of Strings using the virtual machine's {@link Charset#defaultCharset() default charset}.
      * The file is always closed.
      *
      * @param file the file to read, must not be {@code null}
      * @return the list of Strings representing each line in the file, never {@code null}
      * @throws NullPointerException if file is {@code null}.
-     * @throws IOException if an I/O error occurs, including when the file does not exist, is a directory rather than a
-     *         regular file, or for some other reason why the file cannot be opened for reading.
+     * @throws IOException          if an I/O error occurs, including when the file does not exist, is a directory rather than a regular file, or for some other
+     *                              reason why the file cannot be opened for reading.
      * @since 1.3
      * @deprecated Use {@link #readLines(File, Charset)} instead (and specify the appropriate encoding)
      */
@@ -2803,7 +2814,7 @@ public class FileUtils {
      * @since 2.3
      */
     public static List<String> readLines(final File file, final Charset charset) throws IOException {
-        return Files.readAllLines(file.toPath(), charset);
+        return Files.readAllLines(file.toPath(), Charsets.toCharset(charset));
     }
 
     /**
@@ -2902,9 +2913,8 @@ public class FileUtils {
             // Fallback: Only set modified time to match source file
             return targetFile.setLastModified(sourceFile.lastModified());
         }
-
         // TODO: (Help!) Determine historically why setLastModified(File, File) needed PathUtils.setLastModifiedTime() if
-        //  sourceFile.isFile() was true, but needed setLastModifiedTime(File, long) if sourceFile.isFile() was false
+        // sourceFile.isFile() was true, but needed setLastModifiedTime(File, long) if sourceFile.isFile() was false
     }
 
     /**
@@ -2931,7 +2941,7 @@ public class FileUtils {
      * @since 2.0
      */
     public static long sizeOf(final File file) {
-        return Uncheck.get(() -> PathUtils.sizeOf(file.toPath()));
+        return Uncheck.getAsLong(() -> PathUtils.sizeOf(file.toPath()));
     }
 
     /**
@@ -2977,7 +2987,7 @@ public class FileUtils {
         } catch (final FileNotFoundException e) {
             throw new UncheckedIOException(e);
         }
-        return Uncheck.get(() -> PathUtils.sizeOfDirectory(directory.toPath()));
+        return Uncheck.getAsLong(() -> PathUtils.sizeOfDirectory(directory.toPath()));
     }
 
     /**
@@ -3122,7 +3132,7 @@ public class FileUtils {
     }
 
     /**
-     * Implements behavior similar to the UNIX "touch" utility. Creates a new file with size 0, or, if the file exists, just
+     * Implements behavior similar to the Unix "touch" utility. Creates a new file with size 0, or, if the file exists, just
      * updates the file's modified time. This method throws an IOException if the last modified date
      * of the file cannot be set. It creates parent directories if they do not exist.
      *
@@ -3193,7 +3203,7 @@ public class FileUtils {
     }
 
     /**
-     * Writes a CharSequence to a file creating the file if it does not exist using the default encoding for the VM.
+     * Writes a CharSequence to a file creating the file if it does not exist using the virtual machine's {@link Charset#defaultCharset() default charset}.
      *
      * @param file the file to write
      * @param data the content to write to the file
@@ -3207,12 +3217,11 @@ public class FileUtils {
     }
 
     /**
-     * Writes a CharSequence to a file creating the file if it does not exist using the default encoding for the VM.
+     * Writes a CharSequence to a file creating the file if it does not exist using the virtual machine's {@link Charset#defaultCharset() default charset}.
      *
      * @param file   the file to write
      * @param data   the content to write to the file
-     * @param append if {@code true}, then the data will be added to the
-     *               end of the file rather than overwriting
+     * @param append if {@code true}, then the data will be added to the end of the file rather than overwriting
      * @throws IOException in case of an I/O error
      * @since 2.1
      * @deprecated Use {@link #write(File, CharSequence, Charset, boolean)} instead (and specify the appropriate encoding)
@@ -3483,7 +3492,7 @@ public class FileUtils {
     }
 
     /**
-     * Writes a String to a file creating the file if it does not exist using the default encoding for the VM.
+     * Writes a String to a file creating the file if it does not exist using the virtual machine's {@link Charset#defaultCharset() default charset}.
      *
      * @param file the file to write
      * @param data the content to write to the file
@@ -3496,12 +3505,11 @@ public class FileUtils {
     }
 
     /**
-     * Writes a String to a file creating the file if it does not exist using the default encoding for the VM.
+     * Writes a String to a file creating the file if it does not exist using the virtual machine's {@link Charset#defaultCharset() default charset}.
      *
      * @param file   the file to write
      * @param data   the content to write to the file
-     * @param append if {@code true}, then the String will be added to the
-     *               end of the file rather than overwriting
+     * @param append if {@code true}, then the String will be added to the end of the file rather than overwriting
      * @throws IOException in case of an I/O error
      * @since 2.1
      * @deprecated Use {@link #writeStringToFile(File, String, Charset, boolean)} instead (and specify the appropriate encoding)

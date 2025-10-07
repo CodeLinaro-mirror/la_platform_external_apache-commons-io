@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -31,7 +31,7 @@ import org.junit.jupiter.api.Test;
  *
  * @see RandomAccessFile
  */
-public class RandomAccessFileOriginTest extends AbstractRandomAccessFileOriginTest<RandomAccessFile, RandomAccessFileOrigin> {
+class RandomAccessFileOriginTest extends AbstractRandomAccessFileOriginTest<RandomAccessFile, RandomAccessFileOrigin> {
 
     @SuppressWarnings("resource")
     @Override
@@ -47,14 +47,14 @@ public class RandomAccessFileOriginTest extends AbstractRandomAccessFileOriginTe
 
     @Override
     @Test
-    public void testGetFile() {
+    void testGetFile() {
         // Cannot convert a Writer to a File.
         assertThrows(UnsupportedOperationException.class, super::testGetFile);
     }
 
     @Override
     @Test
-    public void testGetPath() {
+    void testGetPath() {
         // Cannot convert a Writer to a Path.
         assertThrows(UnsupportedOperationException.class, super::testGetPath);
     }

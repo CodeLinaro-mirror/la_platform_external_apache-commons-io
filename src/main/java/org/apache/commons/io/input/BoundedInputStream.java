@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -28,7 +28,7 @@ import org.apache.commons.io.function.IOBiConsumer;
 /**
  * Reads bytes up to a maximum count and stops once reached.
  * <p>
- * To build an instance, see {@link AbstractBuilder}.
+ * To build an instance: Use the {@link #builder()} to access all features.
  * </p>
  * <p>
  * By default, a {@link BoundedInputStream} is <em>unbound</em>; so make sure to call {@link AbstractBuilder#setMaxCount(long)}.
@@ -93,7 +93,7 @@ public class BoundedInputStream extends ProxyInputStream {
      *
      * @param <T> The subclass.
      */
-    static abstract class AbstractBuilder<T extends AbstractBuilder<T>> extends ProxyInputStream.AbstractBuilder<BoundedInputStream, T> {
+    abstract static class AbstractBuilder<T extends AbstractBuilder<T>> extends ProxyInputStream.AbstractBuilder<BoundedInputStream, T> {
 
         /** The current count of bytes counted. */
         private long count;
@@ -145,7 +145,7 @@ public class BoundedInputStream extends ProxyInputStream {
          * Default is {@value IOUtils#EOF}, negative means unbound.
          * </p>
          *
-         * @param maxCount The maximum number of bytes to return.
+         * @param maxCount The maximum number of bytes to return, negative means unbound.
          * @return {@code this} instance.
          */
         public T setMaxCount(final long maxCount) {
@@ -243,27 +243,38 @@ public class BoundedInputStream extends ProxyInputStream {
     public static class Builder extends AbstractBuilder<Builder> {
 
         /**
+         * Constructs a new builder of {@link BoundedInputStream}.
+         */
+        public Builder() {
+            // empty
+        }
+
+        /**
          * Builds a new {@link BoundedInputStream}.
          * <p>
-         * You must set input that supports {@link #getInputStream()}, otherwise, this method throws an exception.
+         * You must set an aspect that supports {@link #getInputStream()}, otherwise, this method throws an exception.
          * </p>
          * <p>
-         * This builder use the following aspects:
+         * If you start from an input stream, an exception can't be thrown, and you can call {@link #getUnchecked()} instead.
+         * </p>
+         * <p>
+         * This builder uses the following aspects:
          * </p>
          * <ul>
-         * <li>{@link #getInputStream()}</li>
+         * <li>{@link #getInputStream()} gets the target aspect.</li>
          * <li>{@link #getAfterRead()}</li>
          * <li>{@link #getCount()}</li>
          * <li>{@link #getMaxCount()}</li>
-         * <li>{@link #isPropagateClose()}</li>
          * <li>{@link #getOnMaxCount()}</li>
+         * <li>{@link #isPropagateClose()}</li>
          * </ul>
          *
          * @return a new instance.
          * @throws IllegalStateException         if the {@code origin} is {@code null}.
          * @throws UnsupportedOperationException if the origin cannot be converted to an {@link InputStream}.
-         * @throws IOException                   if an I/O error occurs.
+         * @throws IOException                   if an I/O error occurs converting to an {@link InputStream} using {@link #getInputStream()}.
          * @see #getInputStream()
+         * @see #getUnchecked()
          */
         @Override
         public BoundedInputStream get() throws IOException {
@@ -309,7 +320,10 @@ public class BoundedInputStream extends ProxyInputStream {
     }
 
     /**
-     * Constructs a new {@link BoundedInputStream} that wraps the given input stream and is unlimited.
+     * Constructs a new {@link BoundedInputStream} that wraps the given input stream and is <em>unbounded</em>.
+     * <p>
+     * To build an instance: Use the {@link #builder()} to access all features.
+     * </p>
      *
      * @param in The wrapped input stream.
      * @deprecated Use {@link AbstractBuilder#get()}.
@@ -331,7 +345,7 @@ public class BoundedInputStream extends ProxyInputStream {
      * Constructs a new {@link BoundedInputStream} that wraps the given input stream and limits it to a certain size.
      *
      * @param inputStream The wrapped input stream.
-     * @param maxCount    The maximum number of bytes to return.
+     * @param maxCount    The maximum number of bytes to return, negative means unbound.
      * @deprecated Use {@link AbstractBuilder#get()}.
      */
     @Deprecated
@@ -537,7 +551,7 @@ public class BoundedInputStream extends ProxyInputStream {
      * @deprecated Use {@link AbstractBuilder#setPropagateClose(boolean)}.
      */
     @Deprecated
-    public void setPropagateClose(final boolean propagateClose) {
+    public synchronized void setPropagateClose(final boolean propagateClose) {
         this.propagateClose = propagateClose;
     }
 

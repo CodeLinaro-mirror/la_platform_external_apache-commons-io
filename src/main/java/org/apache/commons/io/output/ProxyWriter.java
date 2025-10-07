@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -51,9 +51,9 @@ public class ProxyWriter extends FilterWriter {
      * The default implementation does nothing.
      * </p>
      *
-     * @since 2.0
      * @param n number of chars written
      * @throws IOException if the post-processing fails
+     * @since 2.0
      */
     @SuppressWarnings("unused") // Possibly thrown from subclasses.
     protected void afterWrite(final int n) throws IOException {
@@ -130,9 +130,9 @@ public class ProxyWriter extends FilterWriter {
      * The default implementation does nothing.
      * </p>
      *
-     * @since 2.0
      * @param n number of chars to be written
      * @throws IOException if the pre-processing fails
+     * @since 2.0
      */
     @SuppressWarnings("unused") // Possibly thrown from subclasses.
     protected void beforeWrite(final int n) throws IOException {

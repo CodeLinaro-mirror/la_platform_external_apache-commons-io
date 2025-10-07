@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -110,32 +110,40 @@ public class ReaderInputStream extends AbstractInputStream {
         private CharsetEncoder charsetEncoder = newEncoder(getCharset());
 
         /**
+         * Constructs a new builder of {@link ReaderInputStream}.
+         */
+        public Builder() {
+            // empty
+        }
+
+        /**
          * Builds a new {@link ReaderInputStream}.
          *
          * <p>
-         * You must set input that supports {@link #getReader()}, otherwise, this method throws an exception.
+         * You must set an aspect that supports {@link #getReader()}, otherwise, this method throws an exception.
          * </p>
          * <p>
-         * This builder use the following aspects:
+         * This builder uses the following aspects:
          * </p>
          * <ul>
-         * <li>{@link #getReader()}</li>
+         * <li>{@link #getReader()} gets the target aspect.</li>
          * <li>{@link #getBufferSize()}</li>
          * <li>{@link #getCharset()}</li>
          * <li>{@link CharsetEncoder}</li>
          * </ul>
          *
          * @return a new instance.
-         * @throws UnsupportedOperationException if the origin cannot provide a Reader.
-         * @throws IllegalStateException if the {@code origin} is {@code null}.
+         * @throws UnsupportedOperationException if the origin cannot provide a {@link Reader}.
+         * @throws IllegalStateException         if the {@code origin} is {@code null}.
+         * @throws IOException                   if an I/O error occurs converting to a {@link Reader} using {@link #getReader()}.
          * @see #getReader()
          * @see CharsetEncoder
          * @see #getBufferSize()
+         * @see #getUnchecked()
          */
-        @SuppressWarnings("resource")
         @Override
         public ReaderInputStream get() throws IOException {
-            return new ReaderInputStream(getReader(), charsetEncoder, getBufferSize());
+            return new ReaderInputStream(this);
         }
 
         CharsetEncoder getCharsetEncoder() {
@@ -212,9 +220,14 @@ public class ReaderInputStream extends AbstractInputStream {
 
     private boolean endOfInput;
 
+    @SuppressWarnings("resource") // caller closes.
+    private ReaderInputStream(final Builder builder) throws IOException {
+        this(builder.getReader(), builder.charsetEncoder, builder.getBufferSize());
+    }
+
     /**
-     * Constructs a new {@link ReaderInputStream} that uses the default character encoding with a default input buffer size of
-     * {@value IOUtils#DEFAULT_BUFFER_SIZE} characters.
+     * Constructs a new {@link ReaderInputStream} that uses the virtual machine's {@link Charset#defaultCharset() default charset} with a default input buffer
+     * size of {@value IOUtils#DEFAULT_BUFFER_SIZE} characters.
      *
      * @param reader the target {@link Reader}
      * @deprecated Use {@link ReaderInputStream#builder()} instead

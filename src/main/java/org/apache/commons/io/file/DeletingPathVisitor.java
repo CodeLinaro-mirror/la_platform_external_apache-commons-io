@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -93,7 +93,6 @@ public class DeletingPathVisitor extends CountingPathVisitor {
      * Constructs a instance that deletes files except for the files and directories explicitly given.
      *
      * @param pathCounter How to count visits.
-     *
      * @param skip The files to skip deleting.
      */
     public DeletingPathVisitor(final PathCounters pathCounter, final String... skip) {
