@@ -18,6 +18,7 @@ third_party {
   identifier {
     type: "Git"
     value: "https://github.com/apache/commons-io.git"
-    version: "rel/commons-io-2.20.0"
+    version: "c224bce839494ed651e5eba320b27c73ce8d804e"
+    closest_version: "rel/commons-io-2.20.0"
   }
 }
